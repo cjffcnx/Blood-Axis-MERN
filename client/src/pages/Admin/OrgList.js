@@ -3,15 +3,29 @@ import Layout from "../../components/shared/Layout/Layout";
 import moment from "moment";
 import API from "../../services/API";
 
+import { useSelector } from "react-redux";
+
 const OrgList = () => {
+  const { user } = useSelector((state) => state.auth);
   const [data, setData] = useState([]);
   //find donar records
   const getDonars = async () => {
     try {
-      const { data } = await API.get("/admin/org-list");
-      console.log(data);
-      if (data?.success) {
-        setData(data?.orgData);
+      if (user?.role === "admin") {
+        const { data } = await API.get("/admin/org-list");
+        if (data?.success) {
+          setData(data?.orgData);
+        }
+      } else if (user?.role === "hospital") {
+        const { data } = await API.get("/inventory/get-orgnaisation-for-hospital");
+        if (data?.success) {
+          setData(data?.organisations);
+        }
+      } else if (user?.role === "donar") {
+        const { data } = await API.get("/inventory/get-orgnaisation");
+        if (data?.success) {
+          setData(data?.organisations);
+        }
       }
     } catch (error) {
       console.log(error);
@@ -20,7 +34,7 @@ const OrgList = () => {
 
   useEffect(() => {
     getDonars();
-  }, []);
+  }, [user]);
 
   //DELETE FUNCTION
   const handelDelete = async (id) => {
@@ -58,12 +72,14 @@ const OrgList = () => {
               <td>{record.phone}</td>
               <td>{moment(record.createdAt).format("DD/MM/YYYY hh:mm A")}</td>
               <td>
-                <button
-                  className="btn btn-danger"
-                  onClick={() => handelDelete(record._id)}
-                >
-                  Delete
-                </button>
+                {user?.role === "admin" && (
+                  <button
+                    className="btn btn-danger"
+                    onClick={() => handelDelete(record._id)}
+                  >
+                    Delete
+                  </button>
+                )}
               </td>
             </tr>
           ))}

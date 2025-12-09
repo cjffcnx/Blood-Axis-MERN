@@ -26,6 +26,11 @@ app.use("/api/v1/auth", require("./routes/authRoutes"));
 app.use("/api/v1/inventory", require("./routes/inventoryRoutes"));
 app.use("/api/v1/analytics", require("./routes/analyticsRoutes"));
 app.use("/api/v1/admin", require("./routes/adminRoutes"));
+app.use("/api/v1/request", require("./routes/requestRoutes"));
+app.use("/api/v1/account-requests", require("./routes/accountRequestRoutes"));
+
+// Static Folder for Uploads
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 //port
 const PORT = process.env.PORT || 8080;

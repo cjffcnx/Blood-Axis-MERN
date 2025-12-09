@@ -54,8 +54,18 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, "phone numbe is required"],
     },
+    isAvailable: {
+      type: Boolean,
+      default: true,
+    },
+    preferredCity: {
+      type: String,
+    },
   },
   { timestamps: true }
 );
+
+// Indexes for optimization
+userSchema.index({ role: 1 });
 
 module.exports = mongoose.model("users", userSchema);

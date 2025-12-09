@@ -99,7 +99,8 @@ const getInventoryController = async (req, res) => {
       })
       .populate("donar")
       .populate("hospital")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
     return res.status(200).send({
       success: true,
       messaage: "get all records successfully",
@@ -122,7 +123,8 @@ const getInventoryHospitalController = async (req, res) => {
       .populate("donar")
       .populate("hospital")
       .populate("organisation")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
     return res.status(200).send({
       success: true,
       messaage: "get hospital comsumer records successfully",
@@ -146,7 +148,8 @@ const getRecentInventoryController = async (req, res) => {
         organisation: req.body.userId,
       })
       .limit(3)
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
     return res.status(200).send({
       success: true,
       message: "recent Invenotry Data",
@@ -241,11 +244,11 @@ const getOrgnaisationController = async (req, res) => {
 const getOrgnaisationForHospitalController = async (req, res) => {
   try {
     const hospital = req.body.userId;
-    const orgId = await inventoryModel.distinct("organisation", { hospital });
+    // const orgId = await inventoryModel.distinct("organisation", { hospital });
     //find org
-    const organisations = await userModel.find({
-      _id: { $in: orgId },
-    });
+    const organisations = await userModel
+      .find({ role: "organisation" })
+      .sort({ createdAt: -1 });
     return res.status(200).send({
       success: true,
       message: "Hospital Org Data Fetched Successfully",

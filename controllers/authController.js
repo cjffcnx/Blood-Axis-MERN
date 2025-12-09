@@ -12,6 +12,14 @@ const registerController = async (req, res) => {
         message: "User ALready exists",
       });
     }
+
+    // Role restriction: Only 'donar' can register directly
+    if (req.body.role !== "donar") {
+      return res.status(403).send({
+        success: false,
+        message: "Only Donors can register directly. Organisations and Hospitals must submit a request.",
+      });
+    }
     //hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(req.body.password, salt);

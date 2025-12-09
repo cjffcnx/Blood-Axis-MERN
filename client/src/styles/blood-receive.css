@@ -1,0 +1,33 @@
+.blood-receive-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+    padding: 2rem 0;
+}
+
+.blood-receive-page .card {
+    border: none;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.blood-receive-page .table th {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 15px;
+}
+
+.blood-receive-page .table td {
+    padding: 15px;
+    vertical-align: middle;
+}
+
+.blood-receive-page .table-hover tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.blood-receive-page .badge {
+    font-weight: 500;
+    padding: 8px 12px;
+    border-radius: 20px;
+}

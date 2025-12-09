@@ -197,11 +197,34 @@ const Form = ({ formType, submitBtn, formTitle }) => {
           }
         })()}
 
+        {formType === "register" && (
+          <div className="form-check mb-3">
+            <input
+              className="form-check-input"
+              type="checkbox"
+              id="termsCheck"
+              required
+            />
+            <label className="form-check-label" htmlFor="termsCheck">
+              I agree to the <Link to="/terms">Terms and Conditions</Link> & <Link to="/privacy">Privacy Policy</Link>
+            </label>
+          </div>
+        )}
+
         <div className="d-flex flex-row justify-content-between">
           {formType === "login" ? (
             <p>
-              Not registerd yet ? Register
-              <Link to="/register"> Here !</Link>
+              {role === "admin" ? (
+                ""
+              ) : (
+                <>
+                  Not registered yet? Register
+                  <Link to={role === "donar" ? "/register" : "/request-account"}>
+                    {" "}
+                    Here !
+                  </Link>
+                </>
+              )}
             </p>
           ) : (
             <p>
