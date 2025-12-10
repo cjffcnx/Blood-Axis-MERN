@@ -320,6 +320,110 @@ const confirmRequestController = async (req, res) => {
     }
 };
 
+// APPROVE RECEIPT (Hospital)
+const approveRequestController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const request = await requestModel.findById(id).populate("hospital organisation");
+
+        if (!request) {
+            return res.status(404).send({
+                success: false,
+                message: "Request not found",
+            });
+        }
+
+        if (request.status !== "fulfilled") {
+            return res.status(400).send({
+                success: false,
+                message: "Only fulfilled requests can be approved",
+            });
+        }
+
+        // Create IN inventory record for hospital (they received the blood)
+        // For blood transfers between org and hospital, we treat the organisation (sender) as the donor
+        const hospitalInventoryRecord = new inventoryModel({
+            inventoryType: "in",
+            bloodGroup: request.bloodGroup,
+            quantity: request.quantity,
+            email: request.hospital.email,
+            organisation: request.hospital._id, // Hospital receives it
+            donar: request.organisation._id, // Organization is the donar (sender)
+        });
+        await hospitalInventoryRecord.save();
+
+        request.status = "completed";
+        await request.save();
+
+        return res.status(200).send({
+            success: true,
+            message: "Blood shipment approved and received successfully",
+            request,
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).send({
+            success: false,
+            message: "Error Approving Receipt",
+            error,
+        });
+    }
+};
+
+// REJECT RECEIPT (Hospital)
+const rejectRequestController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const request = await requestModel.findById(id);
+
+        if (!request) {
+            return res.status(404).send({
+                success: false,
+                message: "Request not found",
+            });
+        }
+
+        if (request.status !== "fulfilled") {
+            return res.status(400).send({
+                success: false,
+                message: "Only fulfilled requests can be rejected",
+            });
+        }
+
+        // When rejected, revert the inventory record
+        // Find the inventory OUT record for this request
+        const inventoryRecord = await inventoryModel.findOne({
+            hospital: request.hospital,
+            organisation: request.organisation,
+            bloodGroup: request.bloodGroup,
+            quantity: request.quantity,
+            inventoryType: "out"
+        }).sort({ createdAt: -1 }).limit(1);
+
+        // Delete the inventory OUT record to restore organisation's stock
+        if (inventoryRecord) {
+            await inventoryModel.findByIdAndDelete(inventoryRecord._id);
+        }
+
+        request.status = "rejected";
+        request.organisation = null; // Clear organisation assignment
+        await request.save();
+
+        return res.status(200).send({
+            success: true,
+            message: "Blood shipment rejected. Stock has been restored to organisation.",
+            request,
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).send({
+            success: false,
+            message: "Error Rejecting Receipt",
+            error,
+        });
+    }
+};
+
 module.exports = {
     createRequestController,
     getRequestsController,
@@ -329,5 +433,7 @@ module.exports = {
     getHospitalRequestsForOrgController,
     fulfillRequestController,
     getHospitalRequestsForHospitalController,
-    confirmRequestController
+    confirmRequestController,
+    approveRequestController,
+    rejectRequestController
 };

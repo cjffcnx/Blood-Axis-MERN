@@ -138,6 +138,14 @@ function App() {
             }
           />
           <Route
+            path="/blood-receive"
+            element={
+              <ProtectedRoute>
+                <BloodReceive />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/donar-list"
             element={
               <ProtectedRoute>

@@ -8,7 +8,9 @@ const {
     getHospitalRequestsForOrgController,
     fulfillRequestController,
     getHospitalRequestsForHospitalController,
-    confirmRequestController
+    confirmRequestController,
+    approveRequestController,
+    rejectRequestController
 } = require("../controllers/requestController");
 const authMiddleware = require("../middlewares/authMiddleware");
 const adminMiddleware = require("../middlewares/adminMiddleware");
@@ -58,5 +60,11 @@ router.get("/my-requests", authMiddleware, getHospitalRequestsForHospitalControl
 
 // CONFIRM RECEIPT || PUT
 router.put("/confirm/:id", authMiddleware, confirmRequestController);
+
+// APPROVE RECEIPT || PUT
+router.put("/approve/:id", authMiddleware, approveRequestController);
+
+// REJECT RECEIPT || PUT
+router.put("/reject/:id", authMiddleware, rejectRequestController);
 
 module.exports = router;
