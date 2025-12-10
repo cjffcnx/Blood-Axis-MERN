@@ -220,12 +220,11 @@ const getHospitalController = async (req, res) => {
 // GET ORG PROFILES
 const getOrgnaisationController = async (req, res) => {
   try {
-    const donar = req.body.userId;
-    const orgId = await inventoryModel.distinct("organisation", { donar });
-    //find org
-    const organisations = await userModel.find({
-      _id: { $in: orgId },
-    });
+    // Fetch all organisations from database
+    const organisations = await userModel
+      .find({ role: "organisation" })
+      .sort({ createdAt: -1 });
+
     return res.status(200).send({
       success: true,
       message: "Org Data Fetched Successfully",
@@ -244,11 +243,12 @@ const getOrgnaisationController = async (req, res) => {
 const getOrgnaisationForHospitalController = async (req, res) => {
   try {
     const hospital = req.body.userId;
-    // const orgId = await inventoryModel.distinct("organisation", { hospital });
-    //find org
+
+    // Find all organisations only (not hospitals)
     const organisations = await userModel
       .find({ role: "organisation" })
       .sort({ createdAt: -1 });
+
     return res.status(200).send({
       success: true,
       message: "Hospital Org Data Fetched Successfully",

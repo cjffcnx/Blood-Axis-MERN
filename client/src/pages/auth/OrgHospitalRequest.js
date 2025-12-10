@@ -113,7 +113,10 @@ const OrgHospitalRequest = () => {
                             </div>
 
                             <div className="mb-3">
-                                <label className="form-label">Contact Person Name</label>
+                                <label className="form-label">
+                                    Contact Person Name
+                                    <span style={{ color: 'red', marginLeft: '4px' }}>*</span>
+                                </label>
                                 <input
                                     type="text"
                                     className="form-control"
@@ -125,7 +128,10 @@ const OrgHospitalRequest = () => {
 
                             {role === "organisation" ? (
                                 <div className="mb-3">
-                                    <label className="form-label">Organisation Name</label>
+                                    <label className="form-label">
+                                        Organisation Name
+                                        <span style={{ color: 'red', marginLeft: '4px' }}>*</span>
+                                    </label>
                                     <input
                                         type="text"
                                         className="form-control"
@@ -136,7 +142,10 @@ const OrgHospitalRequest = () => {
                                 </div>
                             ) : (
                                 <div className="mb-3">
-                                    <label className="form-label">Hospital Name</label>
+                                    <label className="form-label">
+                                        Hospital Name
+                                        <span style={{ color: 'red', marginLeft: '4px' }}>*</span>
+                                    </label>
                                     <input
                                         type="text"
                                         className="form-control"
@@ -148,7 +157,10 @@ const OrgHospitalRequest = () => {
                             )}
 
                             <div className="mb-3">
-                                <label className="form-label">Email</label>
+                                <label className="form-label">
+                                    Email
+                                    <span style={{ color: 'red', marginLeft: '4px' }}>*</span>
+                                </label>
                                 <input
                                     type="email"
                                     className="form-control"
@@ -159,7 +171,10 @@ const OrgHospitalRequest = () => {
                             </div>
 
                             <div className="mb-3">
-                                <label className="form-label">Password</label>
+                                <label className="form-label">
+                                    Password
+                                    <span style={{ color: 'red', marginLeft: '4px' }}>*</span>
+                                </label>
                                 <input
                                     type="password"
                                     className="form-control"
@@ -170,7 +185,10 @@ const OrgHospitalRequest = () => {
                             </div>
 
                             <div className="mb-3">
-                                <label className="form-label">Phone</label>
+                                <label className="form-label">
+                                    Phone
+                                    <span style={{ color: 'red', marginLeft: '4px' }}>*</span>
+                                </label>
                                 <input
                                     type="text"
                                     className="form-control"
@@ -181,7 +199,10 @@ const OrgHospitalRequest = () => {
                             </div>
 
                             <div className="mb-3">
-                                <label className="form-label">Address</label>
+                                <label className="form-label">
+                                    Address
+                                    <span style={{ color: 'red', marginLeft: '4px' }}>*</span>
+                                </label>
                                 <input
                                     type="text"
                                     className="form-control"
@@ -202,7 +223,10 @@ const OrgHospitalRequest = () => {
                             </div>
 
                             <div className="mb-3">
-                                <label className="form-label">Proof Document (PDF/Image)</label>
+                                <label className="form-label">
+                                    Proof Document (PDF/Image)
+                                    <span style={{ color: 'red', marginLeft: '4px' }}>*</span>
+                                </label>
                                 <input
                                     type="file"
                                     className="form-control"

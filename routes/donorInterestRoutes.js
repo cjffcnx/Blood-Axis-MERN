@@ -1,10 +1,10 @@
 const express = require("express");
 const authMiddelware = require("../middlewares/authMiddelware");
 const {
-  createDonorInterest,
-  getInterestedDonors,
-  getDonorInterestHistory,
-  updateInterestStatus,
+    createDonorInterest,
+    getInterestedDonors,
+    getDonorInterestHistory,
+    updateInterestStatus,
 } = require("../controllers/donorInterestController");
 
 const router = express.Router();

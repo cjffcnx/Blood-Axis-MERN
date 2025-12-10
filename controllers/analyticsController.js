@@ -156,4 +156,33 @@ const getDonorStatsController = async (req, res) => {
   }
 };
 
-module.exports = { getDonorStatsController, bloodGroupDetailsContoller };
+// GET DONOR HISTORY
+const getDonorHistoryController = async (req, res) => {
+  try {
+    const donorId = new mongoose.Types.ObjectId(req.body.userId);
+
+    const history = await inventoryModel
+      .find({
+        donar: donorId,
+        inventoryType: "in",
+      })
+      .populate("organisation", "organisationName email phone")
+      .sort({ createdAt: -1 })
+      .limit(10);
+
+    return res.status(200).send({
+      success: true,
+      message: "Donor History Fetched Successfully",
+      history,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({
+      success: false,
+      message: "Error Fetching Donor History",
+      error,
+    });
+  }
+};
+
+module.exports = { getDonorStatsController, bloodGroupDetailsContoller, getDonorHistoryController };
