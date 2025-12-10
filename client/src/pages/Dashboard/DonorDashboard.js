@@ -1,8 +1,8 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useSelector } from 'react-redux';
-import DashboardLayout from '../../components/shared/Layout/DashboardLayout';
-import API from '../../services/API';
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSelector } from "react-redux";
+import DashboardLayout from "../../components/shared/Layout/DashboardLayout";
+import API from "../../services/API";
 import {
     Grid,
     Paper,
@@ -19,239 +19,463 @@ import {
     TableRow,
     CircularProgress,
     Alert,
-    List,
-    Divider
-} from '@mui/material';
-import {
-    Opacity,
-    Event,
-    Favorite,
-    Schedule,
-    LocationOn
-} from '@mui/icons-material';
-import moment from 'moment';
+    Modal,
+    TextField,
+    Select,
+    MenuItem,
+    FormControl,
+    InputLabel
+} from "@mui/material";
+import moment from "moment";
 
-// --- Components ---
-
-const StatCard = ({ title, value, subtext, icon, color }) => (
-    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', borderLeft: `5px solid ${color}` }}>
+// Stat Card
+const StatCard = ({ title, value, icon, color }) => (
+    <Card sx={{ borderLeft: `5px solid ${color}`, borderRadius: 2 }}>
         <CardContent>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <Box>
-                    <Typography color="textSecondary" gutterBottom variant="overline">
-                        {title}
-                    </Typography>
-                    <Typography variant="h4" component="div">
-                        {value}
-                    </Typography>
-                </Box>
-                <Box sx={{ p: 1, borderRadius: 1, bgcolor: `${color}20`, color: color }}>
-                    {icon}
-                </Box>
-            </Box>
-            {subtext && (
-                <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-                    {subtext}
-                </Typography>
-            )}
+            <Typography variant="overline" color="textSecondary">
+                {title}
+            </Typography>
+            <Typography variant="h4">{value}</Typography>
+            <Box sx={{ mt: 1, color: color }}>{icon}</Box>
         </CardContent>
     </Card>
 );
 
-const DonorDashboard = () => {
+export default function DonorDashboard() {
     const { user } = useSelector((state) => state.auth);
+    const queryClient = useQueryClient();
 
-    // Fetch Analytics
-    const { data: analytics, isLoading, error } = useQuery({
-        queryKey: ['donorStats'],
+    // -----------------------------
+    // FETCH DONOR STATS
+    // -----------------------------
+    const donorStats = useQuery({
+        queryKey: ["donorStats"],
         queryFn: async () => {
-            const res = await API.get('/analytics/donor-stats');
+            const res = await API.get("/analytics/donor-stats");
             return res.data;
         }
     });
 
-    // Calculate Next Eligible Date (Approx 90 days from last donation)
-    const lastDonationDate = analytics?.lastDonation;
-    const nextEligibleDate = lastDonationDate
-        ? moment(lastDonationDate).add(90, 'days').format('MMMM Do, YYYY')
-        : 'Available Now';
+    // -----------------------------
+    // FETCH ORGANISATIONS
+    // -----------------------------
+    const orgList = useQuery({
+        queryKey: ["orgList"],
+        queryFn: async () => {
+            const res = await API.get("/inventory/get-orgnaisation");
+            return res.data;
+        }
+    });
 
-    if (isLoading) return <DashboardLayout><CircularProgress /></DashboardLayout>;
-    if (error) return <DashboardLayout><Alert severity="error">Failed to load dashboard data</Alert></DashboardLayout>;
+    // -----------------------------
+    // FETCH DONATION HISTORY
+    // -----------------------------
+    const donationHistory = useQuery({
+        queryKey: ["donationHistory"],
+        queryFn: async () => {
+            const res = await API.get("/analytics/donor-history");
+            return res.data.history;
+        }
+    });
+
+    // -----------------------------
+    // PROFILE UPDATE
+    // -----------------------------
+    const profileMutation = useMutation({
+        mutationFn: async (data) => {
+            return await API.put("/auth/update-profile", data);
+        },
+        onSuccess: () => {
+            alert("Profile updated");
+            queryClient.invalidateQueries(["donorStats"]);
+        }
+    });
+
+    const [profileForm, setProfileForm] = useState({
+        name: user?.name || "",
+        email: user?.email || "",
+        phone: user?.phone || ""
+    });
+
+    // -----------------------------
+    // DONATE MODAL
+    // -----------------------------
+    const [openDonate, setOpenDonate] = useState(false);
+    const [selectedOrg, setSelectedOrg] = useState(null);
+
+    const [formData, setFormData] = useState({
+        dateOfBirth: "",
+        gender: "",
+        availability: "",
+        bloodGroup: ""
+    });
+
+    const donateMutation = useMutation({
+        mutationFn: async () => {
+            console.log("Submitting interest with data:", {
+                organisationId: selectedOrg,
+                dateOfBirth: formData.dateOfBirth,
+                gender: formData.gender,
+                availability: formData.availability,
+                bloodGroup: formData.bloodGroup
+            });
+            return await API.post("/donor-interest/create", {
+                organisationId: selectedOrg,
+                dateOfBirth: formData.dateOfBirth,
+                gender: formData.gender,
+                availability: formData.availability,
+                bloodGroup: formData.bloodGroup
+            });
+        },
+        onSuccess: (response) => {
+            console.log("Success response:", response);
+            alert("Your interest has been registered successfully!");
+            setOpenDonate(false);
+            setFormData({
+                dateOfBirth: "",
+                gender: "",
+                availability: "",
+                bloodGroup: ""
+            });
+        },
+        onError: (error) => {
+            console.error("Error submitting interest:", error);
+            alert("Error: " + (error.response?.data?.message || error.message || "Failed to submit interest"));
+        }
+    });
+
+    if (donorStats.isLoading || orgList.isLoading || donationHistory.isLoading) {
+        return (
+            <DashboardLayout>
+                <CircularProgress />
+            </DashboardLayout>
+        );
+    }
+
+    if (donorStats.error || orgList.error) {
+        return (
+            <DashboardLayout>
+                <Alert severity="error">Could not load dashboard data</Alert>
+            </DashboardLayout>
+        );
+    }
+
+    const stats = donorStats.data;
 
     return (
         <DashboardLayout>
-            {/* Top Section: Greeting + Stats */}
-            <Box sx={{ mb: 4 }}>
-                <Typography variant="h4" gutterBottom>
-                    Namaste, {user?.name} 👋
-                </Typography>
-                <Typography variant="subtitle1" color="textSecondary" sx={{ mb: 3 }}>
-                    Here's a summary of your impact.
-                </Typography>
+            <Typography variant="h4" sx={{ mb: 2 }}>
+                Namaste, {user?.name}
+            </Typography>
 
-                <Grid container spacing={3}>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <StatCard
-                            title="Total Donations"
-                            value={analytics?.totalDonations || 0}
-                            icon={<Favorite />}
-                            color="#d32f2f"
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <StatCard
-                            title="Units Donated"
-                            value={`${analytics?.totalUnits || 0} ML`}
-                            icon={<Opacity />}
-                            color="#0288d1"
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <StatCard
-                            title="Last Donation"
-                            value={lastDonationDate ? moment(lastDonationDate).format('MMM Do') : 'N/A'}
-                            subtext={lastDonationDate ? moment(lastDonationDate).fromNow() : 'Make your first!'}
-                            icon={<Event />}
-                            color="#ed6c02"
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <StatCard
-                            title="Next Eligible"
-                            value={nextEligibleDate === 'Available Now' ? 'Now' : moment(nextEligibleDate).format('MMM Do')}
-                            subtext={nextEligibleDate === 'Available Now' ? 'You can donate today!' : ` Wait until ${nextEligibleDate}`}
-                            icon={<Schedule />}
-                            color="#2e7d32"
-                        />
-                    </Grid>
-                </Grid>
-            </Box>
-
-            {/* Middle Section */}
-            <Grid container spacing={3} sx={{ mb: 4 }}>
-                {/* Recent Donations Table */}
-                <Grid item xs={12} md={8}>
-                    <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
-                        <Typography component="h2" variant="h6" color="primary" gutterBottom>
-                            Recent Donations
-                        </Typography>
-                        <TableContainer>
-                            <Table size="small">
-                                <TableHead>
-                                    <TableRow>
-                                        <TableCell>Date</TableCell>
-                                        <TableCell>Organisation</TableCell>
-                                        <TableCell>Quantity</TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {analytics?.topOrgs?.length === 0 && (
-                                        <TableRow>
-                                            <TableCell colSpan={3} align="center">No donations found</TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
-                        <Button color="primary" sx={{ mt: 2, alignSelf: 'flex-start' }} onClick={() => { }}>
-                            View All History
-                        </Button>
-                    </Paper>
-                </Grid>
-
-                {/* Where You Usually Donate */}
-                <Grid item xs={12} md={4}>
-                    <Paper sx={{ p: 2, height: '100%' }}>
-                        <Typography component="h2" variant="h6" color="primary" gutterBottom>
-                            Top Organisations
-                        </Typography>
-                        <List>
-                            {analytics?.topOrgs?.map((org, index) => (
-                                <React.Fragment key={index}>
-                                    <Box sx={{ mb: 2 }}>
-                                        <Typography variant="subtitle1" fontWeight="bold">
-                                            {org.organisationName}
-                                        </Typography>
-                                        <Typography variant="body2" color="textSecondary">
-                                            {org.email} | {org.phone}
-                                        </Typography>
-                                        <Typography variant="body2" color="secondary" fontWeight="bold">
-                                            {org.totalUnits} ML donated
-                                        </Typography>
-                                    </Box>
-                                    {index < analytics.topOrgs.length - 1 && <Divider sx={{ my: 1 }} />}
-                                </React.Fragment>
-                            ))}
-                            {(!analytics?.topOrgs || analytics.topOrgs.length === 0) && (
-                                <Typography variant="body2">No data yet.</Typography>
-                            )}
-                        </List>
-                    </Paper>
-                </Grid>
-            </Grid>
-
-            {/* Bottom Section */}
+            {/* ----------- STATS SECTION ----------- */}
             <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
-                    <Paper sx={{ p: 3 }}>
-                        <Typography component="h2" variant="h6" gutterBottom color="primary">
-                            Find Nearby Blood Banks
-                        </Typography>
-                        <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-                            Allow location access to find blood banks and hospitals near you immediately.
-                        </Typography>
-
-                        <Button
-                            variant="contained"
-                            color="error"
-                            fullWidth
-                            size="large"
-                            startIcon={<LocationOn />}
-                            onClick={() => {
-                                if (navigator.geolocation) {
-                                    navigator.geolocation.getCurrentPosition((position) => {
-                                        const { latitude, longitude } = position.coords;
-                                        window.open(`https://www.google.com/maps/search/Blood+Bank+Hospital/@${latitude},${longitude},15z`, '_blank');
-                                    }, (error) => {
-                                        alert("Location access denied. Please enable location services.");
-                                    });
-                                } else {
-                                    alert("Geolocation is not supported by this browser.");
-                                }
-                            }}
-                        >
-                            Search Nearby Blood Banks
-                        </Button>
-                        <Typography variant="caption" display="block" sx={{ mt: 2, color: 'text.secondary' }}>
-                            * This will open Google Maps with search results for "Blood Bank" and "Hospital" in your area.
-                        </Typography>
-                    </Paper>
+                <Grid item xs={12} sm={3}>
+                    <StatCard title="Total Donations" value={stats.totalDonations} color="#d32f2f" />
                 </Grid>
-                <Grid item xs={12} md={6}>
-                    <Paper sx={{ p: 3, bgcolor: '#e3f2fd' }}>
-                        <Typography component="h2" variant="h6" gutterBottom color="#0d47a1">
-                            good to know
-                        </Typography>
-                        <Typography variant="subtitle1" fontWeight="bold">
-                            Why wait 3 months?
-                        </Typography>
-                        <Typography variant="body2" paragraph>
-                            Red blood cells take about 6-8 weeks to replenish. Waiting 3 months (90 days) ensures your iron levels are back to normal and keeps you healthy!
-                        </Typography>
-                        <Typography variant="subtitle1" fontWeight="bold">
-                            Before your next donation:
-                        </Typography>
-                        <Typography variant="body2">
-                            • Drink plenty of water<br />
-                            • Eat an iron-rich meal<br />
-                            • Avoid alcohol 24 hours prior
-                        </Typography>
-                    </Paper>
+
+                <Grid item xs={12} sm={3}>
+                    <StatCard title="Total ML" value={`${stats.totalUnits} ml`} color="#0288d1" />
+                </Grid>
+
+                <Grid item xs={12} sm={3}>
+                    <StatCard
+                        title="Last Donation"
+                        value={stats.lastDonation ? moment(stats.lastDonation).format("MMM Do") : "N/A"}
+                        color="#ed6c02"
+                    />
+                </Grid>
+
+                <Grid item xs={12} sm={3}>
+                    <StatCard
+                        title="Next Eligible"
+                        value={stats.nextEligible || "Now"}
+                        color="#2e7d32"
+                    />
                 </Grid>
             </Grid>
+
+            <Box sx={{ mt: 4 }} />
+
+            {/* ----------- INFO CARDS ----------- */}
+            <Grid container spacing={3}>
+                <Grid item xs={12} sm={6}>
+                    <Card sx={{ p: 2 }}>
+                        <Typography variant="h6" sx={{ mb: 1 }}>
+                            Why Donation Matters
+                        </Typography>
+                        <Typography>
+                            One donation can help three people. Blood is tested and stored for those in need.
+                        </Typography>
+                    </Card>
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                    <Card sx={{ p: 2 }}>
+                        <Typography variant="h6" sx={{ mb: 1 }}>
+                            Who Can Donate
+                        </Typography>
+                        <Typography>
+                            Age 18 to 65. Weight 45 kg or more. Must be fit.
+                        </Typography>
+                    </Card>
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                    <Card sx={{ p: 2 }}>
+                        <Typography variant="h6" sx={{ mb: 1 }}>
+                            When You Should Not Donate
+                        </Typography>
+                        <Typography>
+                            People who use drugs through needles cannot donate.
+                        </Typography>
+                    </Card>
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                    <Card sx={{ p: 2 }}>
+                        <Typography variant="h6" sx={{ mb: 1 }}>
+                            How To Prepare
+                        </Typography>
+                        <Typography>
+                            Eat iron rich food and drink water before donating.
+                        </Typography>
+                    </Card>
+                </Grid>
+            </Grid>
+
+            <Box sx={{ mt: 4 }} />
+
+            {/* ----------- ORGANISATION LIST ----------- */}
+            <Paper sx={{ p: 3, mb: 4 }}>
+                <Typography variant="h6" sx={{ mb: 2 }}>
+                    Available Organisations
+                </Typography>
+
+                <TableContainer>
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>Name</TableCell>
+                                <TableCell>Email</TableCell>
+                                <TableCell>City</TableCell>
+                                <TableCell>Phone</TableCell>
+                                <TableCell>Action</TableCell>
+                            </TableRow>
+                        </TableHead>
+
+                        <TableBody>
+                            {orgList.data.organisations?.map((org) => (
+                                <TableRow key={org._id}>
+                                    <TableCell>{org.organisationName}</TableCell>
+                                    <TableCell>{org.email}</TableCell>
+                                    <TableCell>{org.city}</TableCell>
+                                    <TableCell>{org.phone}</TableCell>
+                                    <TableCell>
+                                        <Button
+                                            variant="contained"
+                                            onClick={() => {
+                                                setSelectedOrg(org._id);
+                                                setOpenDonate(true);
+                                            }}
+                                        >
+                                            Donate
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+
+                    </Table>
+                </TableContainer>
+            </Paper>
+
+            {/* ----------- DONATION HISTORY (FIXED) ----------- */}
+            <Paper sx={{ p: 3, mb: 4 }}>
+                <Typography variant="h6" sx={{ mb: 2 }}>
+                    Donation History
+                </Typography>
+
+                <TableContainer>
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>Date</TableCell>
+                                <TableCell>Organisation</TableCell>
+                                <TableCell>ML</TableCell>
+                            </TableRow>
+                        </TableHead>
+
+                        <TableBody>
+                            {donationHistory.data?.map((item) => (
+                                <TableRow key={item._id}>
+                                    <TableCell>
+                                        {moment(item.createdAt).format("MMM Do")}
+                                    </TableCell>
+
+                                    <TableCell>
+                                        {item.organisation?.organisationName || "N/A"}
+                                    </TableCell>
+
+                                    <TableCell>{item.quantity} ml</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            </Paper>
+
+            {/* ----------- PROFILE UPDATE ----------- */}
+            <Paper sx={{ p: 3 }}>
+                <Typography variant="h6" sx={{ mb: 2 }}>
+                    Update Profile
+                </Typography>
+
+                <Grid container spacing={2}>
+                    <Grid item xs={12} sm={4}>
+                        <TextField
+                            fullWidth
+                            label="Name"
+                            value={profileForm.name}
+                            onChange={(e) =>
+                                setProfileForm({ ...profileForm, name: e.target.value })
+                            }
+                        />
+                    </Grid>
+
+                    <Grid item xs={12} sm={4}>
+                        <TextField
+                            fullWidth
+                            label="Email"
+                            value={profileForm.email}
+                            onChange={(e) =>
+                                setProfileForm({ ...profileForm, email: e.target.value })
+                            }
+                        />
+                    </Grid>
+
+                    <Grid item xs={12} sm={4}>
+                        <TextField
+                            fullWidth
+                            label="Phone"
+                            value={profileForm.phone}
+                            onChange={(e) =>
+                                setProfileForm({ ...profileForm, phone: e.target.value })
+                            }
+                        />
+                    </Grid>
+                </Grid>
+
+                <Button
+                    variant="contained"
+                    sx={{ mt: 2 }}
+                    onClick={() => profileMutation.mutate(profileForm)}
+                >
+                    Save Changes
+                </Button>
+            </Paper>
+
+            {/* ----------- DONATE MODAL ----------- */}
+            <Modal open={openDonate} onClose={() => setOpenDonate(false)}>
+                <Box
+                    sx={{
+                        p: 4,
+                        background: "#fff",
+                        borderRadius: 2,
+                        width: 500,
+                        mx: "auto",
+                        mt: "5%",
+                        maxHeight: "90vh",
+                        overflowY: "auto"
+                    }}
+                >
+                    <Typography variant="h6" sx={{ mb: 3 }}>
+                        Register Your Interest to Donate
+                    </Typography>
+
+                    <TextField
+                        fullWidth
+                        label="Date of Birth"
+                        type="date"
+                        sx={{ mb: 2 }}
+                        value={formData.dateOfBirth}
+                        onChange={(e) =>
+                            setFormData({ ...formData, dateOfBirth: e.target.value })
+                        }
+                        InputLabelProps={{
+                            shrink: true,
+                        }}
+                        required
+                    />
+
+                    <FormControl fullWidth sx={{ mb: 2 }} required>
+                        <InputLabel>Gender</InputLabel>
+                        <Select
+                            value={formData.gender}
+                            label="Gender"
+                            onChange={(e) =>
+                                setFormData({ ...formData, gender: e.target.value })
+                            }
+                        >
+                            <MenuItem value="Male">Male</MenuItem>
+                            <MenuItem value="Female">Female</MenuItem>
+                            <MenuItem value="Other">Other</MenuItem>
+                        </Select>
+                    </FormControl>
+
+                    <TextField
+                        fullWidth
+                        label="Available Date"
+                        type="date"
+                        sx={{ mb: 2 }}
+                        value={formData.availability}
+                        onChange={(e) =>
+                            setFormData({ ...formData, availability: e.target.value })
+                        }
+                        InputLabelProps={{
+                            shrink: true,
+                        }}
+                        required
+                        helperText="When are you available to donate?"
+                    />
+
+                    <FormControl fullWidth sx={{ mb: 2 }} required>
+                        <InputLabel>Blood Group</InputLabel>
+                        <Select
+                            value={formData.bloodGroup}
+                            label="Blood Group"
+                            onChange={(e) =>
+                                setFormData({ ...formData, bloodGroup: e.target.value })
+                            }
+                        >
+                            <MenuItem value="A+">A+</MenuItem>
+                            <MenuItem value="A-">A-</MenuItem>
+                            <MenuItem value="B+">B+</MenuItem>
+                            <MenuItem value="B-">B-</MenuItem>
+                            <MenuItem value="O+">O+</MenuItem>
+                            <MenuItem value="O-">O-</MenuItem>
+                            <MenuItem value="AB+">AB+</MenuItem>
+                            <MenuItem value="AB-">AB-</MenuItem>
+                            <MenuItem value="Unknown">Unknown</MenuItem>
+                        </Select>
+                    </FormControl>
+
+                    <Button
+                        variant="contained"
+                        fullWidth
+                        onClick={() => {
+                            console.log("Button clicked!");
+                            console.log("Form data:", formData);
+                            console.log("Selected org:", selectedOrg);
+                            donateMutation.mutate();
+                        }}
+                        disabled={donateMutation.isPending || !formData.dateOfBirth || !formData.gender || !formData.availability || !formData.bloodGroup}
+                    >
+                        {donateMutation.isPending ? "Submitting..." : "Submit Interest"}
+                    </Button>
+
+                </Box>
+            </Modal>
         </DashboardLayout>
     );
-};
-
-export default DonorDashboard;
+}

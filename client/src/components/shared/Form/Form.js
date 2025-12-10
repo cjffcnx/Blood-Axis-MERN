@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import InputType from "./InputType";
 import { Link } from "react-router-dom";
 import { handleLogin, handleRegister } from "../../../services/authService";
+import { isValidEmail } from "../../../utils/validation";
 
 const Form = ({ formType, submitBtn, formTitle }) => {
   const [email, setEmail] = useState("");
@@ -10,9 +11,27 @@ const Form = ({ formType, submitBtn, formTitle }) => {
   const [name, setName] = useState("");
   const [organisationName, setOrganisationName] = useState("");
   const [hospitalName, setHospitalName] = useState("");
-  const [website, setWebsite] = useState("");
+  const [city, setCity] = useState("");
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
+  const [emailError, setEmailError] = useState("");
+
+  const handleEmailChange = (e) => {
+    const val = e.target.value;
+    setEmail(val);
+    if (val && isValidEmail(val)) {
+      setEmailError("");
+    }
+  };
+
+  const handleEmailBlur = () => {
+    if (!email) return;
+    if (!isValidEmail(email)) {
+      setEmailError("Please enter a valid email address");
+    } else {
+      setEmailError("");
+    }
+  };
   return (
     <div>
       <form
@@ -30,67 +49,69 @@ const Form = ({ formType, submitBtn, formTitle }) => {
               organisationName,
               address,
               hospitalName,
-              website
+              city
             );
         }}
       >
         <h1 className="text-center">{formTitle}</h1>
         <hr />
-        <div className="d-flex mb-3">
-          <div className="form-check">
-            <input
-              type="radio"
-              className="form-check-input"
-              name="role"
-              id="donarRadio"
-              value={"donar"}
-              onChange={(e) => setRole(e.target.value)}
-              defaultChecked
-            />
-            <label htmlFor="adminRadio" className="form-check-label">
-              Donar
-            </label>
+        {formType === "login" && (
+          <div className="d-flex mb-3">
+            <div className="form-check">
+              <input
+                type="radio"
+                className="form-check-input"
+                name="role"
+                id="donarRadio"
+                value={"donar"}
+                onChange={(e) => setRole(e.target.value)}
+                defaultChecked
+              />
+              <label htmlFor="adminRadio" className="form-check-label">
+                Donar
+              </label>
+            </div>
+            <div className="form-check ms-2">
+              <input
+                type="radio"
+                className="form-check-input"
+                name="role"
+                id="adminRadio"
+                value={"admin"}
+                onChange={(e) => setRole(e.target.value)}
+              />
+              <label htmlFor="adminRadio" className="form-check-label">
+                Admin
+              </label>
+            </div>
+            <div className="form-check ms-2">
+              <input
+                type="radio"
+                className="form-check-input"
+                name="role"
+                id="hospitalRadio"
+                value={"hospital"}
+                onChange={(e) => setRole(e.target.value)}
+              />
+              <label htmlFor="hospitalRadio" className="form-check-label">
+                Hospital
+              </label>
+            </div>
+            <div className="form-check ms-2">
+              <input
+                type="radio"
+                className="form-check-input"
+                name="role"
+                id="organisationRadio"
+                value={"organisation"}
+                onChange={(e) => setRole(e.target.value)}
+              />
+              <label htmlFor="organisationRadio" className="form-check-label">
+                Organisation
+              </label>
+            </div>
           </div>
-          <div className="form-check ms-2">
-            <input
-              type="radio"
-              className="form-check-input"
-              name="role"
-              id="adminRadio"
-              value={"admin"}
-              onChange={(e) => setRole(e.target.value)}
-            />
-            <label htmlFor="adminRadio" className="form-check-label">
-              Admin
-            </label>
-          </div>
-          <div className="form-check ms-2">
-            <input
-              type="radio"
-              className="form-check-input"
-              name="role"
-              id="hospitalRadio"
-              value={"hospital"}
-              onChange={(e) => setRole(e.target.value)}
-            />
-            <label htmlFor="hospitalRadio" className="form-check-label">
-              Hospital
-            </label>
-          </div>
-          <div className="form-check ms-2">
-            <input
-              type="radio"
-              className="form-check-input"
-              name="role"
-              id="organisationRadio"
-              value={"organisation"}
-              onChange={(e) => setRole(e.target.value)}
-            />
-            <label htmlFor="organisationRadio" className="form-check-label">
-              Organisation
-            </label>
-          </div>
-        </div>
+        )}
         {/* switch statement */}
         {(() => {
           //eslint-disable-next-line
@@ -104,7 +125,10 @@ const Form = ({ formType, submitBtn, formTitle }) => {
                     inputType={"email"}
                     name={"email"}
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={handleEmailChange}
+                    onBlur={handleEmailBlur}
+                    error={emailError}
+                    required={true}
                   />
                   <InputType
                     labelText={"Password"}
@@ -113,6 +137,7 @@ const Form = ({ formType, submitBtn, formTitle }) => {
                     name={"password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    required={true}
                   />
                 </>
               );
@@ -128,6 +153,7 @@ const Form = ({ formType, submitBtn, formTitle }) => {
                       name={"name"}
                       value={name}
                       onChange={(e) => setName(e.target.value)}
+                      required={true}
                     />
                   )}
                   {role === "organisation" && (
@@ -138,6 +164,7 @@ const Form = ({ formType, submitBtn, formTitle }) => {
                       name={"organisationName"}
                       value={organisationName}
                       onChange={(e) => setOrganisationName(e.target.value)}
+                      required={true}
                     />
                   )}
                   {role === "hospital" && (
@@ -148,6 +175,7 @@ const Form = ({ formType, submitBtn, formTitle }) => {
                       name={"hospitalName"}
                       value={hospitalName}
                       onChange={(e) => setHospitalName(e.target.value)}
+                      required={true}
                     />
                   )}
 
@@ -157,7 +185,10 @@ const Form = ({ formType, submitBtn, formTitle }) => {
                     inputType={"email"}
                     name={"email"}
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={handleEmailChange}
+                    onBlur={handleEmailBlur}
+                    error={emailError}
+                    required={true}
                   />
                   <InputType
                     labelText={"Password"}
@@ -166,14 +197,16 @@ const Form = ({ formType, submitBtn, formTitle }) => {
                     name={"password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    required={true}
                   />
                   <InputType
-                    labelText={"website"}
-                    labelFor={"forWebsite"}
+                    labelText={"City"}
+                    labelFor={"forCity"}
                     inputType={"text"}
-                    name={"website"}
-                    value={website}
-                    onChange={(e) => setWebsite(e.target.value)}
+                    name={"city"}
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    required={true}
                   />
                   <InputType
                     labelText={"Address"}
@@ -182,6 +215,7 @@ const Form = ({ formType, submitBtn, formTitle }) => {
                     name={"address"}
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
+                    required={true}
                   />
                   <InputType
                     labelText={"Phone"}
@@ -190,6 +224,7 @@ const Form = ({ formType, submitBtn, formTitle }) => {
                     name={"phone"}
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
+                    required={true}
                   />
                 </>
               );

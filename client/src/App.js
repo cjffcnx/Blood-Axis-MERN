@@ -30,6 +30,7 @@ import Privacy from "./pages/Privacy";
 import DonorDashboard from "./pages/Dashboard/DonorDashboard";
 import RequestSupply from "./pages/Dashboard/RequestSupply";
 import BloodReceive from "./pages/Dashboard/BloodReceive";
+import InterestedDonors from "./pages/Dashboard/InterestedDonors";
 
 const queryClient = new QueryClient();
 
@@ -92,6 +93,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <OrganisationPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/interested-donors"
+            element={
+              <ProtectedRoute>
+                <InterestedDonors />
               </ProtectedRoute>
             }
           />

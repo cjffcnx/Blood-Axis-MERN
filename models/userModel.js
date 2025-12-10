@@ -60,6 +60,9 @@ const userSchema = new mongoose.Schema(
     },
     preferredCity: {
       type: String,
+      required: function () {
+        return this.role === "donar";
+      },
     },
   },
   { timestamps: true }
