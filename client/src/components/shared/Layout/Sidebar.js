@@ -127,13 +127,22 @@ const Sidebar = () => {
             </>
           )}
           {user?.role === "donar" && (
-            <div
-              className={`menu-item ${location.pathname === "/donation" && "active"
-                }`}
-            >
-              <i className="fa-sharp fa-solid fa-building-ngo"></i>
-              <Link to="/donation">Donation</Link>
-            </div>
+            <>
+              <div
+                className={`menu-item ${location.pathname === "/donation" && "active"
+                  }`}
+              >
+                <i className="fa-sharp fa-solid fa-building-ngo"></i>
+                <Link to="/donation">Donation</Link>
+              </div>
+              <div
+                className={`menu-item ${location.pathname === "/search-hospitals" && "active"
+                  }`}
+              >
+                <i className="fa-solid fa-hospital"></i>
+                <Link to="/search-hospitals">Search Hospitals</Link>
+              </div>
+            </>
           )}
           {/* ANALYTICS LINK - REMOVED FOR ADMIN */}
           {(user?.role === "organisation" || user?.role === "hospital") && (

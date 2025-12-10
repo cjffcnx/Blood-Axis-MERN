@@ -98,7 +98,24 @@ const getDonorStatsController = async (req, res) => {
       })
       .sort({ createdAt: -1 });
 
-    // 4. Top Organisations (Aggregation)
+    // 4. Calculate Next Eligible Date (56 days / 8 weeks after last donation)
+    let nextEligible = "Now";
+    if (lastDonation) {
+      const lastDonationDate = new Date(lastDonation.createdAt);
+      const nextEligibleDate = new Date(lastDonationDate);
+      nextEligibleDate.setDate(nextEligibleDate.getDate() + 56); // Add 56 days (8 weeks)
+
+      const today = new Date();
+      if (nextEligibleDate > today) {
+        // Still in waiting period - show the date
+        nextEligible = nextEligibleDate.toISOString();
+      } else {
+        // Eligible to donate
+        nextEligible = "Now";
+      }
+    }
+
+    // 5. Top Organisations (Aggregation)
     const topOrgs = await inventoryModel.aggregate([
       {
         $match: {
@@ -144,6 +161,7 @@ const getDonorStatsController = async (req, res) => {
       totalDonations,
       totalUnits,
       lastDonation: lastDonation?.createdAt || null,
+      nextEligible,
       topOrgs,
     });
   } catch (error) {

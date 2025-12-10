@@ -193,15 +193,11 @@ const getDonarsController = async (req, res) => {
 
 const getHospitalController = async (req, res) => {
   try {
-    const organisation = req.body.userId;
-    //GET HOSPITAL ID
-    const hospitalId = await inventoryModel.distinct("hospital", {
-      organisation,
-    });
-    //FIND HOSPITAL
-    const hospitals = await userModel.find({
-      _id: { $in: hospitalId },
-    });
+    // Fetch all hospitals from database
+    const hospitals = await userModel
+      .find({ role: "hospital" })
+      .sort({ createdAt: -1 });
+
     return res.status(200).send({
       success: true,
       message: "Hospitals Data Fetched Successfully",

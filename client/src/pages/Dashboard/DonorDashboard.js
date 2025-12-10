@@ -83,18 +83,27 @@ export default function DonorDashboard() {
     // -----------------------------
     const profileMutation = useMutation({
         mutationFn: async (data) => {
+            console.log("Updating profile with:", data);
             return await API.put("/auth/update-profile", data);
         },
-        onSuccess: () => {
-            alert("Profile updated");
+        onSuccess: (response) => {
+            console.log("Profile update success:", response);
+            alert("Profile updated successfully!");
             queryClient.invalidateQueries(["donorStats"]);
+            // Reload page to get updated user data
+            window.location.reload();
+        },
+        onError: (error) => {
+            console.error("Profile update error:", error);
+            alert(error.response?.data?.message || "Error updating profile");
         }
     });
 
     const [profileForm, setProfileForm] = useState({
         name: user?.name || "",
         email: user?.email || "",
-        phone: user?.phone || ""
+        phone: user?.phone || "",
+        preferredCity: user?.preferredCity || ""
     });
 
     // -----------------------------
@@ -181,7 +190,7 @@ export default function DonorDashboard() {
                 <Grid item xs={12} sm={3}>
                     <StatCard
                         title="Last Donation"
-                        value={stats.lastDonation ? moment(stats.lastDonation).format("MMM Do") : "N/A"}
+                        value={stats.lastDonation ? moment(stats.lastDonation).format("MMM Do, YYYY") : "N/A"}
                         color="#ed6c02"
                     />
                 </Grid>
@@ -189,7 +198,7 @@ export default function DonorDashboard() {
                 <Grid item xs={12} sm={3}>
                     <StatCard
                         title="Next Eligible"
-                        value={stats.nextEligible || "Now"}
+                        value={stats.nextEligible !== "Now" ? moment(stats.nextEligible).format("MMM Do, YYYY") : "Now"}
                         color="#2e7d32"
                     />
                 </Grid>
@@ -243,7 +252,20 @@ export default function DonorDashboard() {
                     </Card>
                 </Grid>
             </Grid>
+            
 
+            <Box sx={{ mt: 4 }} />
+<Grid item xs={12} sm={6}>
+    <Card sx={{ p: 2 }}>
+        <Typography variant="h6" sx={{ mb: 1 }}>
+            Why Wait 56 Days?
+        </Typography>
+        <Typography>
+            Your body needs time to rebuild red blood cells, restore iron levels,
+            and safely recover blood volume after donation.
+        </Typography>
+    </Card>
+</Grid>
             <Box sx={{ mt: 4 }} />
 
             {/* ----------- ORGANISATION LIST ----------- */}
@@ -258,7 +280,7 @@ export default function DonorDashboard() {
                             <TableRow>
                                 <TableCell>Name</TableCell>
                                 <TableCell>Email</TableCell>
-                                <TableCell>City</TableCell>
+                                <TableCell>Address</TableCell>
                                 <TableCell>Phone</TableCell>
                                 <TableCell>Action</TableCell>
                             </TableRow>
@@ -269,7 +291,7 @@ export default function DonorDashboard() {
                                 <TableRow key={org._id}>
                                     <TableCell>{org.organisationName}</TableCell>
                                     <TableCell>{org.email}</TableCell>
-                                    <TableCell>{org.city}</TableCell>
+                                    <TableCell>{org.address}</TableCell>
                                     <TableCell>{org.phone}</TableCell>
                                     <TableCell>
                                         <Button
@@ -332,7 +354,7 @@ export default function DonorDashboard() {
                 </Typography>
 
                 <Grid container spacing={2}>
-                    <Grid item xs={12} sm={4}>
+                    <Grid item xs={12} sm={3}>
                         <TextField
                             fullWidth
                             label="Name"
@@ -343,18 +365,31 @@ export default function DonorDashboard() {
                         />
                     </Grid>
 
-                    <Grid item xs={12} sm={4}>
+                    <Grid item xs={12} sm={3}>
                         <TextField
                             fullWidth
-                            label="Email"
-                            value={profileForm.email}
+                            label="City"
+                            value={profileForm.preferredCity}
                             onChange={(e) =>
-                                setProfileForm({ ...profileForm, email: e.target.value })
+                                setProfileForm({ ...profileForm, preferredCity: e.target.value })
                             }
                         />
                     </Grid>
 
-                    <Grid item xs={12} sm={4}>
+                    <Grid item xs={12} sm={3}>
+                        <TextField
+                            fullWidth
+                            label="Email"
+                            type="email"
+                            value={profileForm.email}
+                            onChange={(e) =>
+                                setProfileForm({ ...profileForm, email: e.target.value })
+                            }
+                            helperText="Can only be changed once every 12 hours"
+                        />
+                    </Grid>
+
+                    <Grid item xs={12} sm={3}>
                         <TextField
                             fullWidth
                             label="Phone"
@@ -362,6 +397,7 @@ export default function DonorDashboard() {
                             onChange={(e) =>
                                 setProfileForm({ ...profileForm, phone: e.target.value })
                             }
+                            helperText="Can only be changed once every 12 hours"
                         />
                     </Grid>
                 </Grid>
@@ -369,9 +405,14 @@ export default function DonorDashboard() {
                 <Button
                     variant="contained"
                     sx={{ mt: 2 }}
-                    onClick={() => profileMutation.mutate(profileForm)}
+                    onClick={() => {
+                        console.log("Save button clicked");
+                        console.log("Profile form data:", profileForm);
+                        profileMutation.mutate(profileForm);
+                    }}
+                    disabled={profileMutation.isPending}
                 >
-                    Save Changes
+                    {profileMutation.isPending ? "Saving..." : "Save Changes"}
                 </Button>
             </Paper>
 

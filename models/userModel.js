@@ -64,6 +64,14 @@ const userSchema = new mongoose.Schema(
         return this.role === "donar";
       },
     },
+    lastEmailUpdate: {
+      type: Date,
+      default: null,
+    },
+    lastPhoneUpdate: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );

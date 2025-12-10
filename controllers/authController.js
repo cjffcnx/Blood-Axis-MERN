@@ -108,4 +108,85 @@ const currentUserController = async (req, res) => {
   }
 };
 
-module.exports = { registerController, loginController, currentUserController };
+//UPDATE PROFILE
+const updateProfileController = async (req, res) => {
+  try {
+    const userId = req.body.userId;
+    const { name, email, phone, preferredCity } = req.body;
+
+    // Find current user
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.status(404).send({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const now = new Date();
+    const twelveHoursInMs = 12 * 60 * 60 * 1000;
+
+    // Check email update restriction (12 hours)
+    if (email && email !== user.email) {
+      if (user.lastEmailUpdate) {
+        const timeSinceLastEmailUpdate = now - new Date(user.lastEmailUpdate);
+        if (timeSinceLastEmailUpdate < twelveHoursInMs) {
+          const hoursRemaining = Math.ceil((twelveHoursInMs - timeSinceLastEmailUpdate) / (60 * 60 * 1000));
+          return res.status(400).send({
+            success: false,
+            message: `You can only change email once every 12 hours. Please wait ${hoursRemaining} more hour(s).`,
+          });
+        }
+      }
+
+      // Check if email already exists
+      const emailExists = await userModel.findOne({ email, _id: { $ne: userId } });
+      if (emailExists) {
+        return res.status(400).send({
+          success: false,
+          message: "Email already in use by another account",
+        });
+      }
+
+      user.email = email;
+      user.lastEmailUpdate = now;
+    }
+
+    // Check phone update restriction (12 hours)
+    if (phone && phone !== user.phone) {
+      if (user.lastPhoneUpdate) {
+        const timeSinceLastPhoneUpdate = now - new Date(user.lastPhoneUpdate);
+        if (timeSinceLastPhoneUpdate < twelveHoursInMs) {
+          const hoursRemaining = Math.ceil((twelveHoursInMs - timeSinceLastPhoneUpdate) / (60 * 60 * 1000));
+          return res.status(400).send({
+            success: false,
+            message: `You can only change phone once every 12 hours. Please wait ${hoursRemaining} more hour(s).`,
+          });
+        }
+      }
+      user.phone = phone;
+      user.lastPhoneUpdate = now;
+    }
+
+    // Update name and city (no restrictions)
+    if (name) user.name = name;
+    if (preferredCity !== undefined) user.preferredCity = preferredCity;
+
+    await user.save();
+
+    return res.status(200).send({
+      success: true,
+      message: "Profile updated successfully",
+      user,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({
+      success: false,
+      message: "Error updating profile",
+      error,
+    });
+  }
+};
+
+module.exports = { registerController, loginController, currentUserController, updateProfileController };

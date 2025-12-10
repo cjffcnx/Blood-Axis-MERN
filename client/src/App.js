@@ -31,6 +31,7 @@ import DonorDashboard from "./pages/Dashboard/DonorDashboard";
 import RequestSupply from "./pages/Dashboard/RequestSupply";
 import BloodReceive from "./pages/Dashboard/BloodReceive";
 import InterestedDonors from "./pages/Dashboard/InterestedDonors";
+import SearchHospitals from "./pages/Dashboard/SearchHospitals";
 
 const queryClient = new QueryClient();
 
@@ -101,6 +102,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <InterestedDonors />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/search-hospitals"
+            element={
+              <ProtectedRoute>
+                <SearchHospitals />
               </ProtectedRoute>
             }
           />
