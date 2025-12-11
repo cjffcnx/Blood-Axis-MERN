@@ -32,6 +32,8 @@ import RequestSupply from "./pages/Dashboard/RequestSupply";
 import BloodReceive from "./pages/Dashboard/BloodReceive";
 import InterestedDonors from "./pages/Dashboard/InterestedDonors";
 import SearchHospitals from "./pages/Dashboard/SearchHospitals";
+import BloodPaymentRequest from "./pages/Dashboard/BloodPaymentRequest";
+import ESewaSuccess from "./pages/Dashboard/ESewaSuccess";
 
 const queryClient = new QueryClient();
 
@@ -214,6 +216,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <AccountRequests />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/blood-payment-request"
+            element={
+              <ProtectedRoute>
+                <BloodPaymentRequest />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/payment-success"
+            element={
+              <ProtectedRoute>
+                <ESewaSuccess />
               </ProtectedRoute>
             }
           />

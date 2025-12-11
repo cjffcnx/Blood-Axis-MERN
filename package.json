@@ -12,6 +12,7 @@
   "author": "techinfoyt",
   "license": "ISC",
   "dependencies": {
+    "axios": "^1.13.2",
     "bcryptjs": "^2.4.3",
     "colors": "^1.4.0",
     "concurrently": "^8.0.1",

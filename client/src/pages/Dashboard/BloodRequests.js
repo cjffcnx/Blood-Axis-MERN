@@ -67,6 +67,7 @@ const BloodRequests = () => {
                             <th scope="col">Phone</th>
                             <th scope="col">Date</th>
                             <th scope="col">Status</th>
+                            <th scope="col">Paid</th>
                             {user?.role === "organisation" && <th scope="col">Action</th>}
                         </tr>
                     </thead>
@@ -83,6 +84,11 @@ const BloodRequests = () => {
                                 <td>
                                     <span className="badge bg-warning text-dark">{record.status}</span>
                                 </td>
+                                <td>
+                                    <span className={`badge ${record.paymentStatus === "paid" ? "bg-success" : "bg-secondary"}`}>
+                                        {record.paymentStatus || "non-paid"}
+                                    </span>
+                                </td>
                                 {user?.role === "organisation" && (
                                     <td>
                                         <button
@@ -97,7 +103,7 @@ const BloodRequests = () => {
                         ))}
                         {data?.length === 0 && (
                             <tr>
-                                <td colSpan="7" className="text-center">No active requests found.</td>
+                                <td colSpan={user?.role === "organisation" ? 8 : 7} className="text-center">No active requests found.</td>
                             </tr>
                         )}
                     </tbody>

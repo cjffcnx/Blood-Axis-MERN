@@ -108,12 +108,19 @@ const updateRequestStatusController = async (req, res) => {
 // CREATE HOSPITAL REQUEST (Hospital)
 const createHospitalRequestController = async (req, res) => {
     try {
-        const { bloodGroup, quantity, message, organisationId } = req.body;
+        const { bloodGroup, quantity, message, organisationId, paymentStatus } = req.body;
         // Validation
         if (!bloodGroup || !quantity) {
             return res.status(400).send({
                 success: false,
                 message: "Blood Group and Quantity are required",
+            });
+        }
+
+        if (!organisationId) {
+            return res.status(400).send({
+                success: false,
+                message: "Please select an organisation",
             });
         }
 
@@ -133,8 +140,9 @@ const createHospitalRequestController = async (req, res) => {
             bloodGroup,
             quantity,
             message,
-            organisation: organisationId || null, // Optional target
-            status: "pending"
+            organisation: organisationId, // Required target organisation
+            status: "pending",
+            paymentStatus: paymentStatus === "paid" ? "paid" : "non-paid",
         });
 
         await request.save();
@@ -156,11 +164,15 @@ const createHospitalRequestController = async (req, res) => {
 // GET HOSPITAL REQUESTS FOR ORG
 const getHospitalRequestsForOrgController = async (req, res) => {
     try {
+        const organisationId = req.body.userId;
+
         const requests = await requestModel.find({
             hospital: { $exists: true }, // Only hospital requests
-            status: "pending"
+            organisation: organisationId, // Only requests targeted to this organisation
+            status: "pending",
         })
             .populate("hospital", "hospitalName name phone email address")
+            .populate("organisation", "organisationName email phone")
             .sort({ createdAt: -1 });
 
         return res.status(200).send({
@@ -424,6 +436,28 @@ const rejectRequestController = async (req, res) => {
     }
 };
 
+// LIST ORGANISATIONS (for hospital selection)
+const getOrganisationsController = async (req, res) => {
+    try {
+        const organisations = await userModel
+            .find({ role: "organisation" })
+            .select("organisationName name email phone address");
+
+        return res.status(200).send({
+            success: true,
+            message: "Organisations fetched successfully",
+            organisations,
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).send({
+            success: false,
+            message: "Error fetching organisations",
+            error,
+        });
+    }
+};
+
 module.exports = {
     createRequestController,
     getRequestsController,
@@ -435,5 +469,6 @@ module.exports = {
     getHospitalRequestsForHospitalController,
     confirmRequestController,
     approveRequestController,
-    rejectRequestController
+    rejectRequestController,
+    getOrganisationsController
 };

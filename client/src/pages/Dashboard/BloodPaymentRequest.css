@@ -1,0 +1,146 @@
+.blood-payment-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 40px 0;
+}
+
+.blood-payment-page .card {
+    border: none;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.blood-payment-page .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+}
+
+.blood-payment-page .card-header {
+    padding: 30px;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+.blood-payment-page .card-header h3 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.blood-payment-page .form-select,
+.blood-payment-page .form-control,
+.blood-payment-page textarea {
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 12px 15px;
+    transition: border-color 0.3s ease;
+}
+
+.blood-payment-page .form-select:focus,
+.blood-payment-page .form-control:focus,
+.blood-payment-page textarea:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.blood-payment-page .input-group-lg .form-control {
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.blood-payment-page .input-group-text {
+    background-color: #f5f5f5;
+    border: 2px solid #e0e0e0;
+    color: #333;
+    font-weight: 600;
+}
+
+.blood-payment-page .card.bg-light {
+    background-color: #f8f9fa !important;
+    border: 2px dashed #667eea;
+    border-radius: 8px;
+}
+
+.blood-payment-page .card.bg-light .card-body {
+    padding: 20px;
+}
+
+.blood-payment-page .card.bg-light strong {
+    color: #333;
+}
+
+.blood-payment-page .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 15px 30px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.blood-payment-page .btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+
+.blood-payment-page .btn-primary:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.blood-payment-page .alert {
+    border-radius: 8px;
+    border: none;
+    padding: 15px;
+}
+
+.blood-payment-page .alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.blood-payment-page .text-muted {
+    font-size: 14px;
+}
+
+.blood-payment-page .card-header.bg-info {
+    background: linear-gradient(135deg, #06c6f0 0%, #0096d1 100%) !important;
+}
+
+.blood-payment-page .card-header.bg-info h5 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.blood-payment-page ol {
+    padding-left: 25px;
+    line-height: 1.8;
+}
+
+.blood-payment-page ol li {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+@media (max-width: 768px) {
+    .blood-payment-page {
+        padding: 20px 0;
+    }
+
+    .blood-payment-page .card-body {
+        padding: 20px !important;
+    }
+
+    .blood-payment-page .btn-lg {
+        padding: 12px 20px;
+        font-size: 16px;
+    }
+
+    .blood-payment-page .card.bg-light .row {
+        flex-direction: column;
+    }
+
+    .blood-payment-page .card.bg-light .col-md-6.text-end {
+        text-align: left !important;
+        margin-top: 10px;
+    }
+}

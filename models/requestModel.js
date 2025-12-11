@@ -44,6 +44,11 @@ const requestSchema = new mongoose.Schema(
             default: "pending",
             enum: ["pending", "approved", "rejected", "fulfilled", "completed"],
         },
+        paymentStatus: {
+            type: String,
+            enum: ["paid", "non-paid"],
+            default: "non-paid",
+        },
     },
     { timestamps: true }
 );

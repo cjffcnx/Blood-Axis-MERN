@@ -1,0 +1,185 @@
+.khalti-success-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    padding: 40px 0;
+}
+
+.khalti-success-page .payment-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.khalti-success-page .card-body {
+    padding: 50px 30px;
+}
+
+.khalti-success-page .icon-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    font-size: 40px;
+    animation: scaleIn 0.6s ease-out;
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0);
+    }
+
+    to {
+        transform: scale(1);
+    }
+}
+
+.khalti-success-page .success-icon {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+}
+
+.khalti-success-page .error-icon {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+}
+
+.khalti-success-page h4 {
+    font-weight: 600;
+    margin-top: 20px;
+    font-size: 24px;
+}
+
+.khalti-success-page .text-muted {
+    font-size: 16px;
+    color: #6b7280 !important;
+}
+
+.khalti-success-page .payment-details {
+    background: #f9fafb;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 20px 0;
+    border: 1px solid #e5e7eb;
+}
+
+.khalti-success-page .detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.khalti-success-page .detail-row:last-child {
+    border-bottom: none;
+}
+
+.khalti-success-page .detail-row .label {
+    font-weight: 600;
+    color: #4b5563;
+    font-size: 14px;
+}
+
+.khalti-success-page .detail-row .value {
+    color: #1f2937;
+    font-weight: 500;
+}
+
+.khalti-success-page .alert {
+    border-radius: 10px;
+    border: none;
+    padding: 15px;
+    font-size: 15px;
+}
+
+.khalti-success-page .alert-info {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.khalti-success-page .btn {
+    padding: 12px 20px;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-size: 15px;
+}
+
+.khalti-success-page .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+}
+
+.khalti-success-page .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+
+.khalti-success-page .btn-outline-secondary:hover {
+    background-color: #6c757d;
+    color: white;
+}
+
+.khalti-success-page .loading-card .spinner-border {
+    width: 60px;
+    height: 60px;
+}
+
+.khalti-success-page .badge {
+    padding: 8px 15px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .khalti-success-page {
+        padding: 20px;
+    }
+
+    .khalti-success-page .card-body {
+        padding: 30px 20px;
+    }
+
+    .khalti-success-page .icon-circle {
+        width: 60px;
+        height: 60px;
+        font-size: 30px;
+    }
+
+    .khalti-success-page h4 {
+        font-size: 20px;
+    }
+
+    .khalti-success-page .payment-details {
+        padding: 15px;
+    }
+
+    .khalti-success-page .detail-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .khalti-success-page .detail-row .value {
+        margin-top: 5px;
+    }
+}

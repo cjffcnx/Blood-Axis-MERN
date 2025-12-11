@@ -29,6 +29,7 @@ app.use("/api/v1/admin", require("./routes/adminRoutes"));
 app.use("/api/v1/request", require("./routes/requestRoutes"));
 app.use("/api/v1/account-requests", require("./routes/accountRequestRoutes"));
 app.use("/api/v1/donor-interest", require("./routes/donorInterestRoutes"));
+app.use("/api/v1/esewa", require("./routes/esewaRoutes"));
 
 // Static Folder for Uploads
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));

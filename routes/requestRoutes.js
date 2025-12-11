@@ -10,7 +10,8 @@ const {
     getHospitalRequestsForHospitalController,
     confirmRequestController,
     approveRequestController,
-    rejectRequestController
+    rejectRequestController,
+    getOrganisationsController
 } = require("../controllers/requestController");
 const authMiddleware = require("../middlewares/authMiddleware");
 const adminMiddleware = require("../middlewares/adminMiddleware");
@@ -48,6 +49,9 @@ router.put("/update-status/:id", authMiddleware, adminMiddleware, updateRequestS
 
 // CREATE HOSPITAL REQUEST || POST
 router.post("/hospital-request", authMiddleware, createHospitalRequestController);
+
+// LIST ORGANISATIONS FOR HOSPITAL SELECTION || GET
+router.get("/organisations", authMiddleware, getOrganisationsController);
 
 // GET HOSPITAL REQUESTS || GET
 router.get("/hospital-requests", authMiddleware, getHospitalRequestsForOrgController);

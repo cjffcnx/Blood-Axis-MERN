@@ -1,0 +1,156 @@
+.request-supply-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 40px 0;
+}
+
+.request-supply-page .request-card {
+    border: none;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.request-supply-page .request-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+}
+
+.request-supply-page .card-header {
+    padding: 30px;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+.request-supply-page .card-header h2 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.request-supply-page .form-select,
+.request-supply-page .form-control,
+.request-supply-page textarea {
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 12px 15px;
+    transition: border-color 0.3s ease;
+}
+
+.request-supply-page .form-select:focus,
+.request-supply-page .form-control:focus,
+.request-supply-page textarea:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.request-supply-page .input-group-lg .form-control {
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.request-supply-page .input-group-text {
+    background-color: #f5f5f5;
+    border: 2px solid #e0e0e0;
+    color: #333;
+    font-weight: 600;
+}
+
+.request-supply-page .price-summary {
+    background-color: #f8f9fa !important;
+    border: 2px dashed #667eea;
+    border-radius: 8px;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.request-supply-page .price-summary .card-body {
+    padding: 20px;
+}
+
+.request-supply-page .price-summary strong {
+    color: #333;
+}
+
+.request-supply-page .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 15px 30px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.request-supply-page .btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+
+.request-supply-page .btn-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 15px 30px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    color: white;
+}
+
+.request-supply-page .btn-success:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+}
+
+.request-supply-page .btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.request-supply-page .text-muted {
+    font-size: 14px;
+}
+
+.request-supply-page .gap-3 {
+    gap: 1rem !important;
+}
+
+@media (max-width: 768px) {
+    .request-supply-page {
+        padding: 20px 0;
+    }
+
+    .request-supply-page .card-body {
+        padding: 20px !important;
+    }
+
+    .request-supply-page .btn-lg {
+        padding: 12px 20px;
+        font-size: 16px;
+    }
+
+    .request-supply-page .gap-3 {
+        flex-direction: column;
+    }
+
+    .request-supply-page .flex-grow-1 {
+        width: 100%;
+    }
+
+    .request-supply-page .price-summary .row {
+        flex-direction: column;
+    }
+
+    .request-supply-page .price-summary .col-md-6.text-end {
+        text-align: left !important;
+        margin-top: 10px;
+    }
+}
