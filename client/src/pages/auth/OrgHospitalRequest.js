@@ -3,6 +3,7 @@ import API from "../../services/API";
 import { Link, useNavigate } from "react-router-dom";
 import Spinner from "../../components/shared/Spinner";
 import { toast } from "react-toastify";
+import { isValidEmail, isValidPassword, getPasswordError } from "../../utils/validation";
 
 const OrgHospitalRequest = () => {
     const [role, setRole] = useState("organisation");
@@ -16,8 +17,23 @@ const OrgHospitalRequest = () => {
     const [hospitalName, setHospitalName] = useState("");
     const [proofFile, setProofFile] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [emailError, setEmailError] = useState("");
+    const [passwordError, setPasswordError] = useState("");
 
     const navigate = useNavigate();
+
+    const handleEmailBlur = () => {
+        if (email && !isValidEmail(email)) {
+            setEmailError("Please enter a valid email address");
+        } else {
+            setEmailError("");
+        }
+    };
+
+    const handlePasswordBlur = () => {
+        const error = getPasswordError(password);
+        setPasswordError(error);
+    };
 
     const handleFileChange = (e) => {
         setProofFile(e.target.files[0]);
@@ -26,6 +42,21 @@ const OrgHospitalRequest = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            // Validate email
+            if (!isValidEmail(email)) {
+                setEmailError("Please enter a valid email address");
+                toast.error("Please enter a valid email address");
+                return;
+            }
+
+            // Validate password
+            const passwordErrorMsg = getPasswordError(password);
+            if (passwordErrorMsg) {
+                setPasswordError(passwordErrorMsg);
+                toast.error(passwordErrorMsg);
+                return;
+            }
+
             if (!proofFile) {
                 return toast.error("Please upload a proof document");
             }
@@ -163,11 +194,20 @@ const OrgHospitalRequest = () => {
                                 </label>
                                 <input
                                     type="email"
-                                    className="form-control"
+                                    className={`form-control ${emailError ? 'is-invalid' : ''}`}
                                     value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
+                                    onChange={(e) => {
+                                        setEmail(e.target.value);
+                                        setEmailError("");
+                                    }}
+                                    onBlur={handleEmailBlur}
                                     required
                                 />
+                                {emailError && (
+                                    <div className="invalid-feedback" style={{ display: 'block' }}>
+                                        {emailError}
+                                    </div>
+                                )}
                             </div>
 
                             <div className="mb-3">
@@ -177,11 +217,20 @@ const OrgHospitalRequest = () => {
                                 </label>
                                 <input
                                     type="password"
-                                    className="form-control"
+                                    className={`form-control ${passwordError ? 'is-invalid' : ''}`}
                                     value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
+                                    onChange={(e) => {
+                                        setPassword(e.target.value);
+                                        setPasswordError("");
+                                    }}
+                                    onBlur={handlePasswordBlur}
                                     required
                                 />
+                                {passwordError && (
+                                    <div className="invalid-feedback" style={{ display: 'block' }}>
+                                        {passwordError}
+                                    </div>
+                                )}
                             </div>
 
                             <div className="mb-3">

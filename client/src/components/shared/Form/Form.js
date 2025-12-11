@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import InputType from "./InputType";
 import { Link } from "react-router-dom";
 import { handleLogin, handleRegister } from "../../../services/authService";
-import { isValidEmail } from "../../../utils/validation";
+import { isValidEmail, getPasswordError } from "../../../utils/validation";
 
 const Form = ({ formType, submitBtn, formTitle }) => {
   const [email, setEmail] = useState("");
@@ -15,6 +15,7 @@ const Form = ({ formType, submitBtn, formTitle }) => {
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
   const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   const handleEmailChange = (e) => {
     const val = e.target.value;
@@ -32,6 +33,21 @@ const Form = ({ formType, submitBtn, formTitle }) => {
       setEmailError("");
     }
   };
+
+  const handlePasswordChange = (e) => {
+    const val = e.target.value;
+    setPassword(val);
+    if (val && !getPasswordError(val)) {
+      setPasswordError("");
+    }
+  };
+
+  const handlePasswordBlur = () => {
+    if (!password) return;
+    const error = getPasswordError(password);
+    setPasswordError(error);
+  };
+
   return (
     <div>
       <form
@@ -196,7 +212,9 @@ const Form = ({ formType, submitBtn, formTitle }) => {
                     inputType={"password"}
                     name={"password"}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={handlePasswordChange}
+                    onBlur={handlePasswordBlur}
+                    error={passwordError}
                     required={true}
                   />
                   <InputType

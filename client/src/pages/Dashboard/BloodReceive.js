@@ -116,9 +116,9 @@ const BloodReceive = () => {
                                                     <td>{moment(record.createdAt).format("DD/MM/YYYY hh:mm A")}</td>
                                                     <td>
                                                         <span className={`badge ${record.status === 'completed' ? 'bg-success' :
-                                                                record.status === 'fulfilled' ? 'bg-info' :
-                                                                    record.status === 'rejected' ? 'bg-danger' :
-                                                                        'bg-warning'
+                                                            record.status === 'fulfilled' ? 'bg-info' :
+                                                                record.status === 'rejected' ? 'bg-danger' :
+                                                                    'bg-warning'
                                                             }`}>
                                                             {record.status === 'fulfilled' ? 'In Transit' :
                                                                 record.status === 'completed' ? 'Approved' :
