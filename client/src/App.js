@@ -8,6 +8,8 @@ import ChatbotWidget from "./components/shared/ChatbotWidget";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import OrgHospitalRequest from "./pages/auth/OrgHospitalRequest";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
 import HomePage from "./pages/HomePage";
 import ProtectedRoute from "./components/Routes/ProtectedRoute";
 import PublicRoute from "./components/Routes/PublicRoute";
@@ -195,6 +197,22 @@ function App() {
             element={
               <PublicRoute>
                 <Register />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/forgot-password"
+            element={
+              <PublicRoute>
+                <ForgotPassword />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/reset-password/:token"
+            element={
+              <PublicRoute>
+                <ResetPassword />
               </PublicRoute>
             }
           />

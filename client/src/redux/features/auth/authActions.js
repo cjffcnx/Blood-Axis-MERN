@@ -69,6 +69,36 @@ export const userRegister = createAsyncThunk(
   }
 );
 
+export const requestRegisterOtp = createAsyncThunk(
+  "auth/requestRegisterOtp",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const { data } = await API.post("/auth/register/request-otp", payload);
+      return data;
+    } catch (error) {
+      if (error.response && error.response.data.message) {
+        return rejectWithValue(error.response.data.message);
+      }
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const verifyRegisterOtp = createAsyncThunk(
+  "auth/verifyRegisterOtp",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const { data } = await API.post("/auth/register/verify-otp", payload);
+      return data;
+    } catch (error) {
+      if (error.response && error.response.data.message) {
+        return rejectWithValue(error.response.data.message);
+      }
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 //current user
 export const getCurrentUser = createAsyncThunk(
   "auth/getCurrentUser",
