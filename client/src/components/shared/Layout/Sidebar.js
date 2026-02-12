@@ -50,6 +50,13 @@ const Sidebar = () => {
                 <i className="fa-solid fa-file-medical"></i>
                 <Link to="/org-requests">Blood Requests</Link>
               </div>
+              <div
+                className={`menu-item ${location.pathname === "/forecast" && "active"
+                  }`}
+              >
+                <i className="fa-solid fa-chart-line"></i>
+                <Link to="/forecast">Forecast</Link>
+              </div>
             </>
           )}
           {user?.role === "admin" && (

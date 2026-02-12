@@ -101,8 +101,6 @@ export default function DonorDashboard() {
 
     const [profileForm, setProfileForm] = useState({
         name: user?.name || "",
-        email: user?.email || "",
-        phone: user?.phone || "",
         preferredCity: user?.preferredCity || ""
     });
 
@@ -252,20 +250,20 @@ export default function DonorDashboard() {
                     </Card>
                 </Grid>
             </Grid>
-            
+
 
             <Box sx={{ mt: 4 }} />
-<Grid item xs={12} sm={6}>
-    <Card sx={{ p: 2 }}>
-        <Typography variant="h6" sx={{ mb: 1 }}>
-            Why Wait 56 Days?
-        </Typography>
-        <Typography>
-            Your body needs time to rebuild red blood cells, restore iron levels,
-            and safely recover blood volume after donation.
-        </Typography>
-    </Card>
-</Grid>
+            <Grid item xs={12} sm={6}>
+                <Card sx={{ p: 2 }}>
+                    <Typography variant="h6" sx={{ mb: 1 }}>
+                        Why Wait 56 Days?
+                    </Typography>
+                    <Typography>
+                        Your body needs time to rebuild red blood cells, restore iron levels,
+                        and safely recover blood volume after donation.
+                    </Typography>
+                </Card>
+            </Grid>
             <Box sx={{ mt: 4 }} />
 
             {/* ----------- ORGANISATION LIST ----------- */}
@@ -376,30 +374,7 @@ export default function DonorDashboard() {
                         />
                     </Grid>
 
-                    <Grid item xs={12} sm={3}>
-                        <TextField
-                            fullWidth
-                            label="Email"
-                            type="email"
-                            value={profileForm.email}
-                            onChange={(e) =>
-                                setProfileForm({ ...profileForm, email: e.target.value })
-                            }
-                            helperText="Can only be changed once every 12 hours"
-                        />
-                    </Grid>
 
-                    <Grid item xs={12} sm={3}>
-                        <TextField
-                            fullWidth
-                            label="Phone"
-                            value={profileForm.phone}
-                            onChange={(e) =>
-                                setProfileForm({ ...profileForm, phone: e.target.value })
-                            }
-                            helperText="Can only be changed once every 12 hours"
-                        />
-                    </Grid>
                 </Grid>
 
                 <Button

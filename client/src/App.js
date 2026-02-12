@@ -34,6 +34,7 @@ import InterestedDonors from "./pages/Dashboard/InterestedDonors";
 import SearchHospitals from "./pages/Dashboard/SearchHospitals";
 import BloodPaymentRequest from "./pages/Dashboard/BloodPaymentRequest";
 import ESewaSuccess from "./pages/Dashboard/ESewaSuccess";
+import BloodForecast from "./pages/Dashboard/BloodForecast";
 
 const queryClient = new QueryClient();
 
@@ -120,6 +121,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Analytics />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/forecast"
+            element={
+              <ProtectedRoute>
+                <BloodForecast />
               </ProtectedRoute>
             }
           />

@@ -30,13 +30,22 @@ const Header = () => {
               </p>
             </li>
             {location.pathname === "/" ||
-            location.pathname === "/donar" ||
-            location.pathname === "/hospital" ? (
-              <li className="nav-item mx-3">
-                <Link to="/analytics" className="nav-link">
-                  Analytics
-                </Link>
-              </li>
+              location.pathname === "/donar" ||
+              location.pathname === "/hospital" ? (
+              <>
+                <li className="nav-item mx-3">
+                  <Link to="/analytics" className="nav-link">
+                    Analytics
+                  </Link>
+                </li>
+                {(user?.role === "organisation" || user?.role === "hospital") && (
+                  <li className="nav-item mx-3">
+                    <Link to="/forecast" className="nav-link">
+                      📊 Forecast
+                    </Link>
+                  </li>
+                )}
+              </>
             ) : (
               <li className="nav-item mx-3">
                 <Link to="/" className="nav-link">
