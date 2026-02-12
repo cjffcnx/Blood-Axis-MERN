@@ -4,13 +4,16 @@ import os
 from dotenv import load_dotenv
 from bson import ObjectId
 
-# Load env from root
-# current_dir = os.path.dirname(os.path.abspath(__file__))
-# project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))
-# load_dotenv(os.path.join(project_root, '.env'))
+# Load env from repo root (one level up from /blood)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(current_dir)
+load_dotenv(os.path.join(project_root, ".env"))
 
-MONGO_URL = "mongodb+srv://blood:blood@cluster0.w5kzf1c.mongodb.net/?appName=Cluster0"
-client = MongoClient(MONGO_URL)
+mongo_url = os.getenv("MONGO_URL") or os.getenv("MONGODB_URI")
+if not mongo_url:
+    raise ValueError("Missing MONGO_URL or MONGODB_URI in environment")
+
+client = MongoClient(mongo_url)
 # List databases to see where 'inventories' is
 print(f"Connected to Atlas")
 dbs = client.list_database_names()
