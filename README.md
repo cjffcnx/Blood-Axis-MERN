@@ -1,6 +1,6 @@
-# Blood Axis – Blood Bank Nepal
+# Blood Bank Management System with AI demand Forecasting
 
-Blood Axis is a MERN-stack web application to manage blood donation, inventory, and requests across donors, hospitals, organisations, and admins.
+Blood Bank Management System with AI demand forecasting is a MERN-stack web application to manage blood donation, inventory, and requests across donors, hospitals, organisations, and admins.
 
 ## Features
 
