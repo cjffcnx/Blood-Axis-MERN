@@ -1095,6 +1095,7 @@ const WelcomePage = () => {
                     </Paper>
                 </Box>
             </Container>
+
         </Box>
     );
 };
