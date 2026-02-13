@@ -635,3 +635,32 @@
 2026-02-12 18:02:34 - api - INFO - Retrieved 14 forecast records
 2026-02-12 18:02:34 - api - INFO - Grouped into 2 blood groups
 2026-02-12 18:02:34 - database - INFO - MongoDB connection closed
+2026-02-13 10:17:01 - database - INFO - MongoDB connection established successfully
+2026-02-13 10:17:01 - database - INFO - MongoDB connection established successfully
+2026-02-13 10:17:01 - database - INFO - MongoDB connection established successfully
+2026-02-13 10:17:01 - database - INFO - Latest forecast date for org 6922ae4a3dae846e73b5a839: 2025-12-21 07:40:16.674000
+2026-02-13 10:17:02 - database - INFO - Latest forecast date for org 6922ae4a3dae846e73b5a839: 2025-12-21 07:40:16.674000
+2026-02-13 10:17:02 - database - INFO - Retrieved 14 forecast records for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 10:17:02 - api - INFO - Retrieved 14 forecast records
+2026-02-13 10:17:02 - api - INFO - Grouped into 2 blood groups
+2026-02-13 10:17:02 - database - INFO - Retrieved 14 forecast records for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 10:17:02 - api - INFO - Retrieved 14 forecast records
+2026-02-13 10:17:02 - api - INFO - Grouped into 2 blood groups
+2026-02-13 10:17:02 - database - INFO - MongoDB connection closed
+2026-02-13 10:17:02 - database - INFO - MongoDB connection closed
+2026-02-13 10:17:07 - database - INFO - MongoDB connection established successfully
+2026-02-13 10:17:07 - forecast_engine - INFO - Starting forecast pipeline for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 10:17:07 - forecast_engine - INFO - Step 1: Extracting historical data from MongoDB...
+2026-02-13 10:17:08 - database - INFO - MongoDB connection established successfully
+2026-02-13 10:17:08 - database - INFO - Fetching blood issue data for organisation 6922ae4a3dae846e73b5a839 from 2025-08-17 04:32:08.507704 to 2026-02-13 04:32:08.507704
+2026-02-13 10:17:08 - database - WARNING - No blood issue data found for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 10:17:08 - forecast_engine - WARNING - No data found for organisation 6922ae4a3dae846e73b5a839 - will use placeholder forecast
+2026-02-13 10:17:08 - forecast_engine - INFO - Generating placeholder forecasts for 6922ae4a3dae846e73b5a839
+2026-02-13 10:17:08 - database - INFO - MongoDB connection closed
+2026-02-13 10:17:19 - database - INFO - MongoDB connection established successfully
+2026-02-13 10:17:20 - database - INFO - MongoDB connection established successfully
+2026-02-13 10:17:20 - database - INFO - Latest forecast date for org 6922ae4a3dae846e73b5a839: 2025-12-21 07:40:16.674000
+2026-02-13 10:17:20 - database - INFO - Retrieved 14 forecast records for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 10:17:20 - api - INFO - Retrieved 14 forecast records
+2026-02-13 10:17:20 - api - INFO - Grouped into 2 blood groups
+2026-02-13 10:17:20 - database - INFO - MongoDB connection closed
