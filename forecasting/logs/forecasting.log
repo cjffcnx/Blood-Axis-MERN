@@ -722,3 +722,203 @@
 2026-02-13 18:28:06 - api - INFO - Retrieved 14 forecast records
 2026-02-13 18:28:06 - api - INFO - Grouped into 2 blood groups
 2026-02-13 18:28:06 - database - INFO - MongoDB connection closed
+2026-02-13 18:37:54 - database - INFO - MongoDB connection established successfully
+2026-02-13 18:37:55 - database - INFO - MongoDB connection established successfully
+2026-02-13 18:37:55 - database - INFO - Latest forecast date for org 6922ae4a3dae846e73b5a839: 2025-12-21 07:40:16.674000
+2026-02-13 18:37:55 - database - INFO - Retrieved 14 forecast records for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 18:37:55 - api - INFO - Retrieved 14 forecast records
+2026-02-13 18:37:55 - api - INFO - Grouped into 2 blood groups
+2026-02-13 18:37:55 - database - INFO - MongoDB connection closed
+2026-02-13 18:38:03 - database - INFO - MongoDB connection established successfully
+2026-02-13 18:38:03 - database - INFO - MongoDB connection established successfully
+2026-02-13 18:38:04 - database - INFO - Latest forecast date for org 6922ae4a3dae846e73b5a839: 2025-12-21 07:40:16.674000
+2026-02-13 18:38:04 - database - INFO - Retrieved 14 forecast records for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 18:38:04 - api - INFO - Retrieved 14 forecast records
+2026-02-13 18:38:04 - api - INFO - Grouped into 2 blood groups
+2026-02-13 18:38:04 - database - INFO - MongoDB connection closed
+2026-02-13 18:38:15 - database - INFO - MongoDB connection established successfully
+2026-02-13 18:38:15 - forecast_engine - INFO - Starting forecast pipeline for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 18:38:15 - forecast_engine - INFO - Step 1: Extracting historical data from MongoDB...
+2026-02-13 18:38:16 - database - INFO - MongoDB connection established successfully
+2026-02-13 18:38:16 - database - INFO - Fetching blood issue data for organisation 6922ae4a3dae846e73b5a839 from 2025-08-17 12:53:16.102974 to 2026-02-13 12:53:16.102974
+2026-02-13 18:38:16 - database - WARNING - No blood issue data found for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 18:38:16 - forecast_engine - WARNING - No data found for organisation 6922ae4a3dae846e73b5a839 - will use placeholder forecast
+2026-02-13 18:38:16 - forecast_engine - INFO - Generating placeholder forecasts for 6922ae4a3dae846e73b5a839
+2026-02-13 18:38:16 - database - INFO - Saving 56 forecast records for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 18:38:16 - database - INFO - Successfully saved 56 forecast records for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 18:38:16 - database - INFO - MongoDB connection closed
+2026-02-13 18:38:25 - database - INFO - MongoDB connection established successfully
+2026-02-13 18:38:25 - database - INFO - MongoDB connection established successfully
+2026-02-13 18:38:25 - database - INFO - Latest forecast date for org 6922ae4a3dae846e73b5a839: 2026-02-13 12:53:16.181000
+2026-02-13 18:38:26 - database - INFO - Retrieved 56 forecast records for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 18:38:26 - api - INFO - Retrieved 56 forecast records
+2026-02-13 18:38:26 - api - INFO - Grouped into 8 blood groups
+2026-02-13 18:38:26 - database - INFO - MongoDB connection closed
+2026-02-13 18:42:16 - database - INFO - MongoDB connection established successfully
+2026-02-13 18:42:17 - database - INFO - MongoDB connection established successfully
+2026-02-13 18:42:17 - database - INFO - Latest forecast date for org 6922ae4a3dae846e73b5a839: 2026-02-13 12:53:16.181000
+2026-02-13 18:42:17 - database - INFO - Retrieved 56 forecast records for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 18:42:17 - api - INFO - Retrieved 56 forecast records
+2026-02-13 18:42:17 - api - INFO - Grouped into 8 blood groups
+2026-02-13 18:42:17 - database - INFO - MongoDB connection closed
+2026-02-13 18:42:25 - database - INFO - MongoDB connection established successfully
+2026-02-13 18:42:26 - database - INFO - MongoDB connection established successfully
+2026-02-13 18:42:26 - database - INFO - Latest forecast date for org 6922ae4a3dae846e73b5a839: 2026-02-13 12:53:16.181000
+2026-02-13 18:42:26 - database - INFO - Retrieved 56 forecast records for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 18:42:26 - api - INFO - Retrieved 56 forecast records
+2026-02-13 18:42:26 - api - INFO - Grouped into 8 blood groups
+2026-02-13 18:42:26 - database - INFO - MongoDB connection closed
+2026-02-13 18:51:19 - database - INFO - MongoDB connection established successfully
+2026-02-13 18:51:20 - database - INFO - MongoDB connection established successfully
+2026-02-13 18:51:20 - database - INFO - Latest forecast date for org 6922ae4a3dae846e73b5a839: 2026-02-13 12:53:16.181000
+2026-02-13 18:51:20 - database - INFO - Retrieved 56 forecast records for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 18:51:20 - api - INFO - Retrieved 56 forecast records
+2026-02-13 18:51:20 - api - INFO - Grouped into 8 blood groups
+2026-02-13 18:51:20 - database - INFO - MongoDB connection closed
+2026-02-13 18:51:29 - database - INFO - MongoDB connection established successfully
+2026-02-13 18:51:30 - database - INFO - MongoDB connection established successfully
+2026-02-13 18:51:30 - database - INFO - Latest forecast date for org 6922ae4a3dae846e73b5a839: 2026-02-13 12:53:16.181000
+2026-02-13 18:51:30 - database - INFO - Retrieved 56 forecast records for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 18:51:30 - api - INFO - Retrieved 56 forecast records
+2026-02-13 18:51:30 - api - INFO - Grouped into 8 blood groups
+2026-02-13 18:51:30 - database - INFO - MongoDB connection closed
+2026-02-13 18:51:41 - database - INFO - MongoDB connection established successfully
+2026-02-13 18:51:41 - forecast_engine - INFO - Starting DEMAND-BASED forecast pipeline for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 18:51:41 - forecast_engine - INFO - Step 1: Calculating demand ratios from inventory totalIn/totalOut...
+2026-02-13 18:51:42 - database - INFO - MongoDB connection established successfully
+2026-02-13 18:51:42 - database - INFO - Calculating blood demand ratios for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 18:51:42 - database - WARNING - No inventory data found for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 18:51:42 - forecast_engine - INFO - Demand ratios calculated for 8 blood groups
+2026-02-13 18:51:42 - forecast_engine - INFO - Demand ranking: [{'blood_group': 'A+', 'total_out': 0, 'total_in': 0, 'demand_ratio': 0.0}, {'blood_group': 'A-', 'total_out': 0, 'total_in': 0, 'demand_ratio': 0.0}, {'blood_group': 'B+', 'total_out': 0, 'total_in': 0, 'demand_ratio': 0.0}, {'blood_group': 'B-', 'total_out': 0, 'total_in': 0, 'demand_ratio': 0.0}, {'blood_group': 'O+', 'total_out': 0, 'total_in': 0, 'demand_ratio': 0.0}, {'blood_group': 'O-', 'total_out': 0, 'total_in': 0, 'demand_ratio': 0.0}, {'blood_group': 'AB+', 'total_out': 0, 'total_in': 0, 'demand_ratio': 0.0}, {'blood_group': 'AB-', 'total_out': 0, 'total_in': 0, 'demand_ratio': 0.0}]
+2026-02-13 18:51:42 - forecast_engine - INFO - Step 2: Generating demand-based forecasts...
+2026-02-13 18:51:42 - forecast_engine - INFO - A+: out=0, in=0, ratio=0.000, forecast=10 units/day
+2026-02-13 18:51:42 - forecast_engine - INFO - A-: out=0, in=0, ratio=0.000, forecast=10 units/day
+2026-02-13 18:51:42 - forecast_engine - INFO - B+: out=0, in=0, ratio=0.000, forecast=10 units/day
+2026-02-13 18:51:42 - forecast_engine - INFO - B-: out=0, in=0, ratio=0.000, forecast=10 units/day
+2026-02-13 18:51:42 - forecast_engine - INFO - O+: out=0, in=0, ratio=0.000, forecast=10 units/day
+2026-02-13 18:51:42 - forecast_engine - INFO - O-: out=0, in=0, ratio=0.000, forecast=10 units/day
+2026-02-13 18:51:42 - forecast_engine - INFO - AB+: out=0, in=0, ratio=0.000, forecast=10 units/day
+2026-02-13 18:51:42 - forecast_engine - INFO - AB-: out=0, in=0, ratio=0.000, forecast=10 units/day
+2026-02-13 18:51:42 - database - INFO - Saving 56 forecast records for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 18:51:42 - database - INFO - Successfully saved 56 forecast records for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 18:51:42 - forecast_engine - INFO - Saved 56 forecast records to database
+2026-02-13 18:51:42 - forecast_engine - INFO - Demand-based forecast completed: 56 records generated
+2026-02-13 18:51:42 - database - INFO - MongoDB connection closed
+2026-02-13 18:51:52 - database - INFO - MongoDB connection established successfully
+2026-02-13 18:51:53 - database - INFO - MongoDB connection established successfully
+2026-02-13 18:51:53 - database - INFO - Latest forecast date for org 6922ae4a3dae846e73b5a839: 2026-02-13 13:06:42.484000
+2026-02-13 18:51:53 - database - INFO - Retrieved 56 forecast records for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 18:51:53 - api - INFO - Retrieved 56 forecast records
+2026-02-13 18:51:53 - api - INFO - Grouped into 8 blood groups
+2026-02-13 18:51:53 - database - INFO - MongoDB connection closed
+2026-02-13 18:59:12 - database - INFO - MongoDB connection established successfully
+2026-02-13 18:59:12 - database - INFO - MongoDB connection established successfully
+2026-02-13 18:59:12 - database - INFO - Latest forecast date for org 6922ae4a3dae846e73b5a839: 2026-02-13 13:06:42.484000
+2026-02-13 18:59:12 - database - INFO - Retrieved 56 forecast records for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 18:59:12 - api - INFO - Retrieved 56 forecast records
+2026-02-13 18:59:12 - api - INFO - Grouped into 8 blood groups
+2026-02-13 18:59:12 - database - INFO - MongoDB connection closed
+2026-02-13 18:59:21 - database - INFO - MongoDB connection established successfully
+2026-02-13 18:59:22 - database - INFO - MongoDB connection established successfully
+2026-02-13 18:59:22 - database - INFO - Latest forecast date for org 6922ae4a3dae846e73b5a839: 2026-02-13 13:06:42.484000
+2026-02-13 18:59:22 - database - INFO - Retrieved 56 forecast records for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 18:59:22 - api - INFO - Retrieved 56 forecast records
+2026-02-13 18:59:22 - api - INFO - Grouped into 8 blood groups
+2026-02-13 18:59:22 - database - INFO - MongoDB connection closed
+2026-02-13 18:59:23 - database - INFO - MongoDB connection established successfully
+2026-02-13 18:59:23 - forecast_engine - INFO - Starting DEMAND-BASED forecast pipeline for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 18:59:23 - forecast_engine - INFO - Step 1: Calculating demand ratios from inventory totalIn/totalOut...
+2026-02-13 18:59:24 - database - INFO - MongoDB connection established successfully
+2026-02-13 18:59:24 - database - INFO - Calculating blood demand ratios for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 18:59:24 - database - INFO - Demand ratios calculated: [{'blood_group': 'A-', 'total_in': 0, 'total_out': 35759, 'demand_ratio': 35759.0}, {'blood_group': 'AB-', 'total_in': 0, 'total_out': 28866, 'demand_ratio': 28866.0}, {'blood_group': 'B-', 'total_in': 0, 'total_out': 20643, 'demand_ratio': 20643.0}, {'blood_group': 'AB+', 'total_in': 20, 'total_out': 30598, 'demand_ratio': 1457.047619047619}, {'blood_group': 'O-', 'total_in': 40, 'total_out': 32352, 'demand_ratio': 789.0731707317074}, {'blood_group': 'B+', 'total_in': 40000, 'total_out': 39025, 'demand_ratio': 0.9756006099847504}, {'blood_group': 'A+', 'total_in': 39115, 'total_out': 35370, 'demand_ratio': 0.9042335617138767}, {'blood_group': 'O+', 'total_in': 40000, 'total_out': 31009, 'demand_ratio': 0.7752056198595035}]
+2026-02-13 18:59:24 - forecast_engine - INFO - Demand ratios calculated for 8 blood groups
+2026-02-13 18:59:24 - forecast_engine - INFO - Demand ranking: [{'blood_group': 'A-', 'total_out': 35759, 'total_in': 0, 'demand_ratio': 35759.0}, {'blood_group': 'AB-', 'total_out': 28866, 'total_in': 0, 'demand_ratio': 28866.0}, {'blood_group': 'B-', 'total_out': 20643, 'total_in': 0, 'demand_ratio': 20643.0}, {'blood_group': 'AB+', 'total_out': 30598, 'total_in': 20, 'demand_ratio': 1457.047619047619}, {'blood_group': 'O-', 'total_out': 32352, 'total_in': 40, 'demand_ratio': 789.0731707317074}, {'blood_group': 'B+', 'total_out': 39025, 'total_in': 40000, 'demand_ratio': 0.9756006099847504}, {'blood_group': 'A+', 'total_out': 35370, 'total_in': 39115, 'demand_ratio': 0.9042335617138767}, {'blood_group': 'O+', 'total_out': 31009, 'total_in': 40000, 'demand_ratio': 0.7752056198595035}]
+2026-02-13 18:59:24 - forecast_engine - INFO - Step 2: Generating demand-based forecasts...
+2026-02-13 18:59:24 - forecast_engine - INFO - A-: out=35759, in=0, ratio=35759.000, forecast=476 units/day
+2026-02-13 18:59:24 - forecast_engine - INFO - AB-: out=28866, in=0, ratio=28866.000, forecast=384 units/day
+2026-02-13 18:59:24 - forecast_engine - INFO - B-: out=20643, in=0, ratio=20643.000, forecast=275 units/day
+2026-02-13 18:59:24 - forecast_engine - INFO - AB+: out=30598, in=20, ratio=1457.048, forecast=407 units/day
+2026-02-13 18:59:24 - forecast_engine - INFO - O-: out=32352, in=40, ratio=789.073, forecast=431 units/day
+2026-02-13 18:59:24 - forecast_engine - INFO - B+: out=39025, in=40000, ratio=0.976, forecast=520 units/day
+2026-02-13 18:59:24 - forecast_engine - INFO - A+: out=35370, in=39115, ratio=0.904, forecast=471 units/day
+2026-02-13 18:59:24 - forecast_engine - INFO - O+: out=31009, in=40000, ratio=0.775, forecast=413 units/day
+2026-02-13 18:59:24 - database - INFO - Saving 56 forecast records for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 18:59:24 - database - INFO - Successfully saved 56 forecast records for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 18:59:24 - forecast_engine - INFO - Saved 56 forecast records to database
+2026-02-13 18:59:24 - forecast_engine - INFO - Demand-based forecast completed: 56 records generated
+2026-02-13 18:59:24 - database - INFO - MongoDB connection closed
+2026-02-13 18:59:34 - database - INFO - MongoDB connection established successfully
+2026-02-13 18:59:35 - database - INFO - MongoDB connection established successfully
+2026-02-13 18:59:35 - database - INFO - Latest forecast date for org 6922ae4a3dae846e73b5a839: 2026-02-13 13:14:24.623000
+2026-02-13 18:59:35 - database - INFO - Retrieved 56 forecast records for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 18:59:35 - api - INFO - Retrieved 56 forecast records
+2026-02-13 18:59:35 - api - INFO - Grouped into 8 blood groups
+2026-02-13 18:59:35 - database - INFO - MongoDB connection closed
+2026-02-13 19:01:26 - database - INFO - MongoDB connection established successfully
+2026-02-13 19:01:27 - database - INFO - MongoDB connection established successfully
+2026-02-13 19:01:27 - database - INFO - Latest forecast date for org 6922ae4a3dae846e73b5a839: 2026-02-13 13:14:24.623000
+2026-02-13 19:01:27 - database - INFO - Retrieved 56 forecast records for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 19:01:27 - api - INFO - Retrieved 56 forecast records
+2026-02-13 19:01:27 - api - INFO - Grouped into 8 blood groups
+2026-02-13 19:01:27 - database - INFO - MongoDB connection closed
+2026-02-13 19:01:35 - database - INFO - MongoDB connection established successfully
+2026-02-13 19:01:36 - database - INFO - MongoDB connection established successfully
+2026-02-13 19:01:36 - database - INFO - Latest forecast date for org 6922ae4a3dae846e73b5a839: 2026-02-13 13:14:24.623000
+2026-02-13 19:01:36 - database - INFO - Retrieved 56 forecast records for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 19:01:36 - api - INFO - Retrieved 56 forecast records
+2026-02-13 19:01:36 - api - INFO - Grouped into 8 blood groups
+2026-02-13 19:01:36 - database - INFO - MongoDB connection closed
+2026-02-13 19:04:03 - database - INFO - MongoDB connection established successfully
+2026-02-13 19:04:03 - database - INFO - Calculating blood demand ratios for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 19:04:03 - database - INFO - Demand ratios calculated: [{'blood_group': 'A-', 'total_in': 0, 'total_out': 35759, 'demand_ratio': 35759.0}, {'blood_group': 'AB-', 'total_in': 0, 'total_out': 28866, 'demand_ratio': 28866.0}, {'blood_group': 'B-', 'total_in': 0, 'total_out': 20643, 'demand_ratio': 20643.0}, {'blood_group': 'AB+', 'total_in': 20, 'total_out': 30598, 'demand_ratio': 1457.047619047619}, {'blood_group': 'O-', 'total_in': 40, 'total_out': 32352, 'demand_ratio': 789.0731707317074}, {'blood_group': 'B+', 'total_in': 40000, 'total_out': 39025, 'demand_ratio': 0.9756006099847504}, {'blood_group': 'A+', 'total_in': 39115, 'total_out': 35370, 'demand_ratio': 0.9042335617138767}, {'blood_group': 'O+', 'total_in': 40000, 'total_out': 31009, 'demand_ratio': 0.7752056198595035}]
+2026-02-13 19:04:03 - database - INFO - MongoDB connection closed
+2026-02-13 19:09:16 - database - INFO - MongoDB connection established successfully
+2026-02-13 19:09:16 - forecast_engine - INFO - Starting DEMAND-BASED forecast pipeline for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 19:09:16 - forecast_engine - INFO - Step 1: Calculating demand ratios from inventory totalIn/totalOut...
+2026-02-13 19:09:17 - database - INFO - MongoDB connection established successfully
+2026-02-13 19:09:17 - database - INFO - Calculating blood demand ratios for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 19:09:17 - database - INFO - Demand ratios calculated: [{'blood_group': 'A-', 'total_in': 0, 'total_out': 35759, 'demand_ratio': 35759.0}, {'blood_group': 'AB-', 'total_in': 0, 'total_out': 28866, 'demand_ratio': 28866.0}, {'blood_group': 'B-', 'total_in': 0, 'total_out': 20643, 'demand_ratio': 20643.0}, {'blood_group': 'AB+', 'total_in': 20, 'total_out': 30598, 'demand_ratio': 1457.047619047619}, {'blood_group': 'O-', 'total_in': 40, 'total_out': 32352, 'demand_ratio': 789.0731707317074}, {'blood_group': 'B+', 'total_in': 40000, 'total_out': 39025, 'demand_ratio': 0.9756006099847504}, {'blood_group': 'A+', 'total_in': 39115, 'total_out': 35370, 'demand_ratio': 0.9042335617138767}, {'blood_group': 'O+', 'total_in': 40000, 'total_out': 31009, 'demand_ratio': 0.7752056198595035}]
+2026-02-13 19:09:17 - forecast_engine - INFO - Demand ratios calculated for 8 blood groups
+2026-02-13 19:09:17 - forecast_engine - INFO - Demand ranking: [{'blood_group': 'A-', 'total_out': 35759, 'total_in': 0, 'demand_ratio': 35759.0}, {'blood_group': 'AB-', 'total_out': 28866, 'total_in': 0, 'demand_ratio': 28866.0}, {'blood_group': 'B-', 'total_out': 20643, 'total_in': 0, 'demand_ratio': 20643.0}, {'blood_group': 'AB+', 'total_out': 30598, 'total_in': 20, 'demand_ratio': 1457.047619047619}, {'blood_group': 'O-', 'total_out': 32352, 'total_in': 40, 'demand_ratio': 789.0731707317074}, {'blood_group': 'B+', 'total_out': 39025, 'total_in': 40000, 'demand_ratio': 0.9756006099847504}, {'blood_group': 'A+', 'total_out': 35370, 'total_in': 39115, 'demand_ratio': 0.9042335617138767}, {'blood_group': 'O+', 'total_out': 31009, 'total_in': 40000, 'demand_ratio': 0.7752056198595035}]
+2026-02-13 19:09:17 - forecast_engine - INFO - Step 2: Generating demand-based forecasts...
+2026-02-13 19:09:17 - forecast_engine - INFO - A-: out=35759, in=0, ratio=35759.000, forecast=476 units/day
+2026-02-13 19:09:17 - forecast_engine - INFO - AB-: out=28866, in=0, ratio=28866.000, forecast=384 units/day
+2026-02-13 19:09:17 - forecast_engine - INFO - B-: out=20643, in=0, ratio=20643.000, forecast=275 units/day
+2026-02-13 19:09:17 - forecast_engine - INFO - AB+: out=30598, in=20, ratio=1457.048, forecast=407 units/day
+2026-02-13 19:09:17 - forecast_engine - INFO - O-: out=32352, in=40, ratio=789.073, forecast=431 units/day
+2026-02-13 19:09:17 - forecast_engine - INFO - B+: out=39025, in=40000, ratio=0.976, forecast=520 units/day
+2026-02-13 19:09:17 - forecast_engine - INFO - A+: out=35370, in=39115, ratio=0.904, forecast=471 units/day
+2026-02-13 19:09:17 - forecast_engine - INFO - O+: out=31009, in=40000, ratio=0.775, forecast=413 units/day
+2026-02-13 19:09:17 - database - INFO - Saving 56 forecast records for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 19:09:17 - database - INFO - Successfully saved 56 forecast records for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 19:09:17 - forecast_engine - INFO - Saved 56 forecast records to database
+2026-02-13 19:09:17 - forecast_engine - INFO - Demand-based forecast completed: 56 records generated
+2026-02-13 19:09:17 - database - INFO - MongoDB connection closed
+2026-02-13 19:15:11 - database - INFO - MongoDB connection established successfully
+2026-02-13 19:15:11 - database - INFO - MongoDB connection established successfully
+2026-02-13 19:15:11 - database - INFO - Latest forecast date for org 6922ae4a3dae846e73b5a839: 2026-02-13 13:24:17.215000
+2026-02-13 19:15:11 - database - INFO - Retrieved 56 forecast records for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 19:15:11 - api - INFO - Retrieved 56 forecast records
+2026-02-13 19:15:11 - api - INFO - Grouped into 8 blood groups
+2026-02-13 19:15:11 - database - INFO - MongoDB connection closed
+2026-02-13 19:15:16 - database - INFO - MongoDB connection established successfully
+2026-02-13 19:15:17 - database - INFO - MongoDB connection established successfully
+2026-02-13 19:15:17 - database - INFO - Latest forecast date for org 6922ae4a3dae846e73b5a839: 2026-02-13 13:24:17.215000
+2026-02-13 19:15:17 - database - INFO - Retrieved 56 forecast records for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 19:15:17 - api - INFO - Retrieved 56 forecast records
+2026-02-13 19:15:17 - api - INFO - Grouped into 8 blood groups
+2026-02-13 19:15:17 - database - INFO - MongoDB connection closed
+2026-02-13 19:24:06 - database - INFO - MongoDB connection established successfully
+2026-02-13 19:24:06 - database - INFO - MongoDB connection established successfully
+2026-02-13 19:24:06 - database - INFO - Latest forecast date for org 6922ae4a3dae846e73b5a839: 2026-02-13 13:24:17.215000
+2026-02-13 19:24:06 - database - INFO - Retrieved 56 forecast records for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 19:24:06 - api - INFO - Retrieved 56 forecast records
+2026-02-13 19:24:06 - api - INFO - Grouped into 8 blood groups
+2026-02-13 19:24:07 - database - INFO - MongoDB connection closed
+2026-02-13 19:24:11 - database - INFO - MongoDB connection established successfully
+2026-02-13 19:24:12 - database - INFO - MongoDB connection established successfully
+2026-02-13 19:24:12 - database - INFO - Latest forecast date for org 6922ae4a3dae846e73b5a839: 2026-02-13 13:24:17.215000
+2026-02-13 19:24:12 - database - INFO - Retrieved 56 forecast records for organisation 6922ae4a3dae846e73b5a839
+2026-02-13 19:24:12 - api - INFO - Retrieved 56 forecast records
+2026-02-13 19:24:12 - api - INFO - Grouped into 8 blood groups
+2026-02-13 19:24:12 - database - INFO - MongoDB connection closed

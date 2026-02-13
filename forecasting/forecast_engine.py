@@ -2,7 +2,7 @@
 Main forecast engine that orchestrates the entire forecasting pipeline.
 """
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from database import DatabaseManager
 from data_processor import DataProcessor
 from forecaster import BloodDemandForecaster
@@ -19,13 +19,14 @@ class ForecastEngine:
         self.db_manager = DatabaseManager()
         self.data_processor = DataProcessor()
     
-    def forecast_organisation(self, organisation_id, days_back=180, save_to_db=True):
+    def generate_forecast(self, organisation_id, days_back=180, save_to_db=True):
         """
-        Generate forecasts for all blood groups of an organisation.
+        Generate DEMAND-BASED forecasts for all blood groups based on inventory totalIn/totalOut.
+        Higher out relative to in = higher future demand.
         
         Args:
             organisation_id: The organisation's MongoDB ObjectId or string ID
-            days_back: Number of days of historical data to use
+            days_back: (Ignored in demand-based approach, kept for compatibility)
             save_to_db: Whether to save forecast results to MongoDB
             
         Returns:
@@ -45,193 +46,143 @@ class ForecastEngine:
                         },
                         ...
                     ],
-                    'status': 'success' or 'partial_success' or 'failed',
+                    'status': 'success' or 'failed',
                     'errors': [...]
                 }
         """
         db_manager = None
         try:
-            logger.info(f"Starting forecast pipeline for organisation {organisation_id}")
+            logger.info(f"Starting DEMAND-BASED forecast pipeline for organisation {organisation_id}")
             
-            # Step 1: Extract data from MongoDB
-            logger.info("Step 1: Extracting historical data from MongoDB...")
+            # Step 1: Get demand ratios from inventory data
+            logger.info("Step 1: Calculating demand ratios from inventory totalIn/totalOut...")
             db_manager = DatabaseManager()
-            df = db_manager.get_blood_issue_data(organisation_id, days_back)
+            demand_df = db_manager.get_blood_demand_ratios(organisation_id)
             
-            if df.empty:
-                logger.warning(f"No data found for organisation {organisation_id} - will use placeholder forecast")
-                # Don't return immediately - generate placeholder forecasts
-                # so the API can still return valid JSON
-                return self._generate_placeholder_forecast(organisation_id)
+            if demand_df.empty:
+                logger.warning(f"No inventory data found for organisation {organisation_id} - will use placeholder forecast")
+                placeholder = self._generate_placeholder_forecast(organisation_id)
+                if save_to_db and placeholder.get('forecasts') and db_manager:
+                    db_records = []
+                    for forecast in placeholder['forecasts']:
+                        db_records.append({
+                            'organisation_id': organisation_id,
+                            'forecast_date': placeholder['forecast_date'],
+                            **forecast
+                        })
+                    db_manager.save_forecast_results(organisation_id, db_records)
+                return placeholder
             
-            logger.info(f"Extracted {len(df)} records from {df['date'].min()} to {df['date'].max()}")
+            logger.info(f"Demand ratios calculated for {len(demand_df)} blood groups")
+            logger.info(f"Demand ranking: {demand_df[['blood_group', 'total_out', 'total_in', 'demand_ratio']].to_dict('records')}")
             
-            # Step 2: Process data and generate forecasts for each blood group
-            logger.info("Step 2: Processing data and generating forecasts...")
+            # Step 2: Generate demand-based forecasts
+            logger.info("Step 2: Generating demand-based forecasts...")
             all_forecasts = []
-            errors = []
             
-            for blood_group in BLOOD_GROUPS:
-                logger.info(f"Processing blood group: {blood_group}")
+            # Calculate proportional forecasts based on actual totalOut quantities
+            total_out_sum = demand_df['total_out'].sum()
+            
+            # Calculate forecast for each blood group based on actual demand
+            for _, row in demand_df.iterrows():
+                blood_group = row['blood_group']
+                total_in = row['total_in']
+                total_out = row['total_out']
+                demand_ratio = row['demand_ratio']
                 
-                # Prepare time series
-                ts, is_valid, msg = self.data_processor.prepare_time_series(df, blood_group)
-                
-                if not is_valid:
-                    logger.warning(f"Validation failed for {blood_group}: {msg}")
-                    errors.append({'blood_group': blood_group, 'error': msg})
+                # Calculate forecast units based on ACTUAL totalOut quantities
+                # Estimate daily average demand assuming 90-day collection period
+                if total_out > 0:
+                    # Blood group has outgoing activity
+                    # Calculate daily average: total_out / 90 days, then scale for forecast
+                    estimated_daily_avg = total_out / 90.0
+                    # Round and ensure reasonable minimum
+                    forecast_units = max(50, int(estimated_daily_avg * 1.2))  # 20% buffer
+                    confidence = 0.75
+                    model_type = 'actual_demand_based'
                     
-                    # Generate baseline forecast as fallback
-                    if ts is not None and len(ts) > 0:
-                        baseline_forecast = self.data_processor.calculate_baseline_forecast(ts)
-                        for _, row in baseline_forecast.iterrows():
-                            all_forecasts.append({
-                                'blood_group': blood_group,
-                                'date': row['date'],
-                                'forecast_units': int(row['forecast_units']),
-                                'lower_bound': int(row['forecast_units'] * 0.8),
-                                'upper_bound': int(row['forecast_units'] * 1.2),
-                                'model_type': 'baseline_insufficient_data',
-                                'confidence': 0.5
-                            })
-                    continue
-                
-                # Validate data quality
-                quality_metrics = self.data_processor.validate_data_quality(ts)
-                
-                # Attempt SARIMA forecasting
-                forecaster = BloodDemandForecaster()
-                success, fit_msg = forecaster.fit_sarima(ts)
-                
-                if success:
-                    # Generate SARIMA forecast
-                    forecast_df, model_type, forecast_success = forecaster.forecast(ts, FORECAST_DAYS)
-                    
-                    if forecast_success:
-                        # Calculate RMSE for confidence assessment
-                        rmse = forecaster.calculate_rmse(ts)
-                        confidence = max(0.6, min(1.0, 1.0 - (rmse / (ts.mean() + 1))))
+                    # Adjust confidence based on totalOut volume
+                    if total_out > 5000:
+                        confidence = 0.85  # High volume = high confidence
+                    elif total_out > 1000:
+                        confidence = 0.75
+                    else:
+                        confidence = 0.65
                         
-                        for _, row in forecast_df.iterrows():
-                            all_forecasts.append({
-                                'blood_group': blood_group,
-                                'date': row['date'],
-                                'forecast_units': int(row['forecast_units']),
-                                'lower_bound': int(row['lower_bound']),
-                                'upper_bound': int(row['upper_bound']),
-                                'model_type': model_type,
-                                'confidence': round(confidence, 3)
-                            })
-                        logger.info(f"Generated SARIMA forecast for {blood_group}")
-                    else:
-                        # SARIMA forecast failed, fall back to baseline
-                        logger.warning(f"SARIMA forecast failed for {blood_group}, using baseline")
-                        baseline_forecast = self.data_processor.calculate_baseline_forecast(ts)
-                        for _, row in baseline_forecast.iterrows():
-                            all_forecasts.append({
-                                'blood_group': blood_group,
-                                'date': row['date'],
-                                'forecast_units': int(row['forecast_units']),
-                                'lower_bound': int(row['forecast_units'] * 0.8),
-                                'upper_bound': int(row['forecast_units'] * 1.2),
-                                'model_type': 'baseline_forecast_error',
-                                'confidence': 0.6
-                            })
+                elif total_in > 0:
+                    # Blood group has inventory but no demand yet - conservative forecast
+                    forecast_units = 30
+                    confidence = 0.4
+                    model_type = 'low_demand_inventory_available'
                 else:
-                    # SARIMA fitting failed, try auto-fit
-                    logger.info(f"Attempting auto-fit for {blood_group}...")
-                    forecaster, auto_success = BloodDemandForecaster.auto_fit_sarima(ts)
+                    # No activity at all - minimal forecast
+                    forecast_units = 20
+                    confidence = 0.3
+                    model_type = 'no_historical_activity'
+                
+                # Generate 7-day forecast with same units each day
+                forecast_date = datetime.utcnow()
+                for day_offset in range(1, FORECAST_DAYS + 1):
+                    future_date = forecast_date + timedelta(days=day_offset)
                     
-                    if auto_success:
-                        forecast_df, model_type, forecast_success = forecaster.forecast(ts, FORECAST_DAYS)
-                        if forecast_success:
-                            rmse = forecaster.calculate_rmse(ts)
-                            confidence = max(0.6, min(1.0, 1.0 - (rmse / (ts.mean() + 1))))
-                            
-                            for _, row in forecast_df.iterrows():
-                                all_forecasts.append({
-                                    'blood_group': blood_group,
-                                    'date': row['date'],
-                                    'forecast_units': int(row['forecast_units']),
-                                    'lower_bound': int(row['lower_bound']),
-                                    'upper_bound': int(row['upper_bound']),
-                                    'model_type': model_type,
-                                    'confidence': round(confidence, 3)
-                                })
-                            logger.info(f"Generated auto-fit forecast for {blood_group}")
-                        else:
-                            # Fall back to baseline
-                            baseline_forecast = self.data_processor.calculate_baseline_forecast(ts)
-                            for _, row in baseline_forecast.iterrows():
-                                all_forecasts.append({
-                                    'blood_group': blood_group,
-                                    'date': row['date'],
-                                    'forecast_units': int(row['forecast_units']),
-                                    'lower_bound': int(row['forecast_units'] * 0.8),
-                                    'upper_bound': int(row['forecast_units'] * 1.2),
-                                    'model_type': 'baseline_autofit_error',
-                                    'confidence': 0.6
-                                })
-                    else:
-                        # All SARIMA attempts failed, use baseline
-                        logger.warning(f"All SARIMA attempts failed for {blood_group}, using baseline")
-                        baseline_forecast = self.data_processor.calculate_baseline_forecast(ts)
-                        for _, row in baseline_forecast.iterrows():
-                            all_forecasts.append({
-                                'blood_group': blood_group,
-                                'date': row['date'],
-                                'forecast_units': int(row['forecast_units']),
-                                'lower_bound': int(row['forecast_units'] * 0.8),
-                                'upper_bound': int(row['forecast_units'] * 1.2),
-                                'model_type': 'baseline_autofit_failed',
-                                'confidence': 0.5
-                            })
+                    all_forecasts.append({
+                        'blood_group': blood_group,
+                        'date': future_date,
+                        'forecast_units': forecast_units,
+                        'lower_bound': int(forecast_units * 0.7),
+                        'upper_bound': int(forecast_units * 1.3),
+                        'model_type': model_type,
+                        'confidence': round(confidence, 3)
+                    })
+                
+                logger.info(f"{blood_group}: out={total_out}, in={total_in}, ratio={demand_ratio:.3f}, forecast={forecast_units} units/day")
             
-            # Step 3: Prepare output
-            status = 'success' if not errors else 'partial_success' if len(errors) < len(BLOOD_GROUPS) else 'failed'
+            # Step 3: Save to database if requested
+            if save_to_db and db_manager:
+                db_records = []
+                forecast_date = datetime.utcnow()
+                for forecast in all_forecasts:
+                    db_records.append({
+                        'organisation_id': organisation_id,
+                        'forecast_date': forecast_date,
+                        **forecast
+                    })
+                success = db_manager.save_forecast_results(organisation_id, db_records)
+                if success:
+                    logger.info(f"Saved {len(db_records)} forecast records to database")
             
             result = {
-                'organisation_id': str(organisation_id),
+                'organisation_id': organisation_id,
                 'forecast_date': datetime.utcnow(),
                 'forecasts': all_forecasts,
-                'status': status,
-                'errors': errors
+                'status': 'success',
+                'errors': []
             }
             
-            logger.info(f"Forecast pipeline completed. Status: {status}, "
-                       f"Generated {len(all_forecasts)} forecast records")
-            
-            # Step 4: Save to MongoDB if requested
-            if save_to_db and all_forecasts and db_manager:
-                # Prepare data for MongoDB
-                db_records = []
-                for forecast in all_forecasts:
-                    db_record = {
-                        'organisation_id': organisation_id,
-                        'forecast_date': result['forecast_date'],
-                        **forecast
-                    }
-                    db_records.append(db_record)
-                
-                db_manager.save_forecast_results(organisation_id, db_records)
-            
+            logger.info(f"Demand-based forecast completed: {len(all_forecasts)} records generated")
             return result
             
         except Exception as e:
-            logger.error(f"Critical error in forecast pipeline: {str(e)}")
+            logger.error(f"Critical error in demand-based forecast pipeline: {str(e)}")
             import traceback
-            logger.error(f"Traceback: {traceback.format_exc()}")
+            logger.error(traceback.format_exc())
+            
             return {
-                'organisation_id': str(organisation_id),
+                'organisation_id': organisation_id,
                 'forecast_date': datetime.utcnow(),
                 'forecasts': [],
                 'status': 'failed',
-                'errors': [str(e)]
+                'errors': [{'error': str(e)}]
             }
         finally:
-            # Close database connection
             if db_manager:
                 db_manager.close()
+    
+    def forecast_organisation(self, organisation_id, days_back=180, save_to_db=True):
+        """
+        ALIAS for generate_forecast - kept for backward compatibility.
+        """
+        return self.generate_forecast(organisation_id, days_back, save_to_db)
     
     def _generate_placeholder_forecast(self, organisation_id):
         """
@@ -271,6 +222,26 @@ class ForecastEngine:
             'status': 'partial_success',
             'errors': ['No historical data available - using placeholder forecasts']
         }
+
+    def _generate_placeholder_group_forecast(self, blood_group):
+        """Generate placeholder forecasts for a single blood group."""
+        from datetime import datetime, timedelta
+
+        now = datetime.utcnow()
+        group_forecasts = []
+        for day in range(FORECAST_DAYS):
+            forecast_date = now + timedelta(days=day + 1)
+            group_forecasts.append({
+                'blood_group': blood_group,
+                'date': forecast_date,
+                'forecast_units': 100,
+                'lower_bound': 80,
+                'upper_bound': 120,
+                'model_type': 'placeholder_no_data',
+                'confidence': 0.3
+            })
+
+        return group_forecasts
     
     def to_json(self, result):
         """

@@ -104,7 +104,7 @@ class DataProcessor:
         Calculate baseline forecast using recent averages.
         
         This is a fallback method when SARIMA fails or when data is insufficient.
-        Uses the average of the last 7 days to predict the next 7 days.
+        Prioritizes the most recent 7 days to capture current demand trends.
         
         Args:
             ts: pd.Series time series data
@@ -114,8 +114,24 @@ class DataProcessor:
             pd.DataFrame: Forecast results with columns [date, forecast_units]
         """
         try:
-            # Use last 7 days average
-            recent_avg = ts.tail(7).mean()
+            # Use weighted average favoring recent data
+            # If last 7 days have more activity, that's the new demand level
+            recent_7 = ts.tail(7)
+            recent_30 = ts.tail(30)
+            
+            # Weight recent 7 days heavily (80%) vs. older data (20%)
+            if len(recent_7) > 0:
+                recent_avg_7 = recent_7.mean()
+            else:
+                recent_avg_7 = 0
+                
+            if len(recent_30) > 0:
+                recent_avg_30 = recent_30.mean()
+            else:
+                recent_avg_30 = 0
+            
+            # 80% weight to last 7 days, 20% to last 30 days
+            recent_avg = (0.8 * recent_avg_7) + (0.2 * recent_avg_30)
             recent_avg = max(recent_avg, 0)  # Ensure non-negative
             
             # Generate forecast
@@ -129,10 +145,10 @@ class DataProcessor:
             forecast_df = pd.DataFrame({
                 'date': forecast_dates,
                 'forecast_units': [round(recent_avg)] * forecast_days,
-                'model_type': 'baseline_7day_average'
+                'model_type': 'baseline_weighted_recent'
             })
             
-            logger.info(f"Generated baseline forecast using 7-day average: {recent_avg:.2f} units")
+            logger.info(f"Generated baseline forecast (7d={recent_avg_7:.1f}, 30d={recent_avg_30:.1f}, weighted={recent_avg:.2f} units)")
             return forecast_df
             
         except Exception as e:

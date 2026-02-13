@@ -2,6 +2,7 @@
 Database operations for MongoDB integration.
 """
 from pymongo import MongoClient
+from bson import ObjectId
 from datetime import datetime, timedelta
 import pandas as pd
 from config import MONGODB_URI, MONGODB_DB, BLOOD_GROUPS
@@ -81,7 +82,7 @@ class DatabaseManager:
                 }
             ]
             
-            results = list(self.db.inventory.aggregate(pipeline))
+            results = list(self.db.inventories.aggregate(pipeline))
             
             if not results:
                 logger.warning(f"No blood issue data found for organisation {organisation_id}")
@@ -103,6 +104,92 @@ class DatabaseManager:
             
         except Exception as e:
             logger.error(f"Error fetching blood issue data: {str(e)}")
+            raise
+    
+    def get_blood_demand_ratios(self, organisation_id):
+        """
+        Calculate demand ratios for each blood group based on totalIn/totalOut.
+        Higher out ratio = higher demand.
+        
+        Args:
+            organisation_id: The organization's MongoDB ObjectId or string ID
+            
+        Returns:
+            pd.DataFrame: DataFrame with columns [blood_group, total_in, total_out, demand_ratio]
+        """
+        try:
+            # Convert to ObjectId if string
+            if isinstance(organisation_id, str):
+                try:
+                    org_id = ObjectId(organisation_id)
+                except:
+                    org_id = organisation_id
+            else:
+                org_id = organisation_id
+                
+            logger.info(f"Calculating blood demand ratios for organisation {org_id}")
+            
+            # Query inventory collection for totalIn and totalOut per blood group
+            pipeline = [
+                {
+                    '$match': {
+                        'organisation': org_id,
+                        'inventoryType': {'$in': ['in', 'out']}
+                    }
+                },
+                {
+                    '$group': {
+                        '_id': {
+                            'blood_group': '$bloodGroup',
+                            'type': '$inventoryType'
+                        },
+                        'total': {'$sum': '$quantity'}
+                    }
+                }
+            ]
+            
+            results = list(self.db.inventories.aggregate(pipeline))
+            
+            logger.debug(f"Aggregation returned {len(results)} results from inventories collection")
+            
+            if not results:
+                logger.warning(f"No inventory data found for organisation {org_id} in inventories collection")
+                # Return empty DataFrame with all blood groups and zero demand
+                return pd.DataFrame([
+                    {'blood_group': bg, 'total_in': 0, 'total_out': 0, 'demand_ratio': 0.0}
+                    for bg in BLOOD_GROUPS
+                ])
+            
+            # Build demand data for all blood groups
+            demand_data = []
+            for blood_group in BLOOD_GROUPS:
+                # Find in and out stats for this blood group
+                in_stat = next((r for r in results if r['_id']['blood_group'] == blood_group and r['_id']['type'] == 'in'), None)
+                out_stat = next((r for r in results if r['_id']['blood_group'] == blood_group and r['_id']['type'] == 'out'), None)
+                
+                total_in = in_stat['total'] if in_stat else 0
+                total_out = out_stat['total'] if out_stat else 0
+                
+                # Calculate demand ratio: higher out relative to in = higher demand
+                # Add 1 to denominator to avoid division by zero
+                demand_ratio = total_out / (total_in + 1)
+                
+                demand_data.append({
+                    'blood_group': blood_group,
+                    'total_in': total_in,
+                    'total_out': total_out,
+                    'demand_ratio': demand_ratio
+                })
+            
+            df = pd.DataFrame(demand_data)
+            # Sort by demand ratio descending (highest demand first)
+            df = df.sort_values('demand_ratio', ascending=False)
+            
+            logger.info(f"Demand ratios calculated: {df.to_dict('records')}")
+            return df
+            
+        except Exception as e:
+            logger.error(f"Error calculating blood demand ratios: {str(e)}")
             raise
     
     def save_forecast_results(self, organisation_id, forecast_data):
