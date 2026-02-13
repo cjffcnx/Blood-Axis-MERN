@@ -34,7 +34,7 @@ const RequestSupply = () => {
         fetchOrgs();
     }, []);
 
-    const BLOOD_RATE = 500; // Rate per ML in NPR
+    const BLOOD_RATE = 200; // Rate per ML in NPR
 
     const calculateAmount = () => {
         return Number(quantity) * BLOOD_RATE;

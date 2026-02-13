@@ -11,7 +11,8 @@ const {
     confirmRequestController,
     approveRequestController,
     rejectRequestController,
-    getOrganisationsController
+    getOrganisationsController,
+    updatePaymentStatusController
 } = require("../controllers/requestController");
 const authMiddleware = require("../middlewares/authMiddleware");
 const adminMiddleware = require("../middlewares/adminMiddleware");
@@ -70,5 +71,8 @@ router.put("/approve/:id", authMiddleware, approveRequestController);
 
 // REJECT RECEIPT || PUT
 router.put("/reject/:id", authMiddleware, rejectRequestController);
+
+// UPDATE PAYMENT STATUS || PUT
+router.put("/payment-status/:id", authMiddleware, updatePaymentStatusController);
 
 module.exports = router;

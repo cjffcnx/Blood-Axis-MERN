@@ -253,7 +253,7 @@ const fulfillRequestController = async (req, res) => {
             });
         }
 
-        // Create OUT inventory record
+        // Create OUT inventory record (organisation stock decreases)
         const inventoryRecord = new inventoryModel({
             inventoryType: "out",
             bloodGroup: requestedBloodGroup,
@@ -263,6 +263,17 @@ const fulfillRequestController = async (req, res) => {
             hospital: request.hospital._id,
         });
         await inventoryRecord.save();
+
+        // Create IN inventory record for hospital (hospital stock increases)
+        const hospitalInventoryRecord = new inventoryModel({
+            inventoryType: "in",
+            bloodGroup: requestedBloodGroup,
+            quantity: requestedQuantity,
+            email: request.hospital.email,
+            organisation: request.hospital._id,
+            donar: organisationId,
+        });
+        await hospitalInventoryRecord.save();
 
         // Update request status and save organisation
         request.status = "fulfilled";
@@ -352,18 +363,6 @@ const approveRequestController = async (req, res) => {
             });
         }
 
-        // Create IN inventory record for hospital (they received the blood)
-        // For blood transfers between org and hospital, we treat the organisation (sender) as the donor
-        const hospitalInventoryRecord = new inventoryModel({
-            inventoryType: "in",
-            bloodGroup: request.bloodGroup,
-            quantity: request.quantity,
-            email: request.hospital.email,
-            organisation: request.hospital._id, // Hospital receives it
-            donar: request.organisation._id, // Organization is the donar (sender)
-        });
-        await hospitalInventoryRecord.save();
-
         request.status = "completed";
         await request.save();
 
@@ -436,6 +435,68 @@ const rejectRequestController = async (req, res) => {
     }
 };
 
+// UPDATE PAYMENT STATUS (Hospital - public requests)
+const updatePaymentStatusController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { paymentStatus } = req.body;
+
+        if (paymentStatus !== "paid") {
+            return res.status(400).send({
+                success: false,
+                message: "Invalid payment status",
+            });
+        }
+
+        const user = await userModel.findById(req.body.userId).select("role");
+        if (!user || user.role !== "hospital") {
+            return res.status(403).send({
+                success: false,
+                message: "Only hospitals can update payment status",
+            });
+        }
+
+        const request = await requestModel.findById(id);
+        if (!request) {
+            return res.status(404).send({
+                success: false,
+                message: "Request not found",
+            });
+        }
+
+        if (request.hospital) {
+            return res.status(403).send({
+                success: false,
+                message: "Payment updates only allowed for public requests",
+            });
+        }
+
+        if (request.paymentStatus === "paid") {
+            return res.status(200).send({
+                success: true,
+                message: "Payment already marked as paid",
+                request,
+            });
+        }
+
+        request.paymentStatus = "paid";
+        await request.save();
+
+        return res.status(200).send({
+            success: true,
+            message: "Payment status updated to paid",
+            request,
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).send({
+            success: false,
+            message: "Error updating payment status",
+            error,
+        });
+    }
+};
+
 // LIST ORGANISATIONS (for hospital selection)
 const getOrganisationsController = async (req, res) => {
     try {
@@ -470,5 +531,6 @@ module.exports = {
     confirmRequestController,
     approveRequestController,
     rejectRequestController,
-    getOrganisationsController
+    getOrganisationsController,
+    updatePaymentStatusController
 };

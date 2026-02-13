@@ -116,7 +116,16 @@ const OrgHospitalRequest = () => {
                     </div>
                     <div className="col-md-4 form-container">
                         <form onSubmit={handleSubmit}>
-                            <h1 className="text-center">Request Account</h1>
+                            <div className="d-flex justify-content-between align-items-center">
+                                <h1 className="m-0">Request Account</h1>
+                                <Link
+                                    to="/"
+                                    className="btn btn-light shadow-sm"
+                                    aria-label="Back to welcome page"
+                                >
+                                    Back to Welcome
+                                </Link>
+                            </div>
                             <hr />
                             <div className="d-flex mb-3">
                                 <div className="form-check">

@@ -52,6 +52,27 @@ const BloodRequests = () => {
         }
     }
 
+    const handleMarkPaid = async (id) => {
+        try {
+            let answer = window.confirm("Mark this request as paid?");
+            if (!answer) return;
+
+            const { data } = await API.put(`/request/payment-status/${id}`, {
+                paymentStatus: "paid",
+            });
+
+            if (data?.success) {
+                toast.success(data.message);
+                getRequests();
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            console.log(error);
+            toast.error("Something went wrong");
+        }
+    };
+
     return (
         <Layout>
             <div className="container mt-4">
@@ -68,7 +89,9 @@ const BloodRequests = () => {
                             <th scope="col">Date</th>
                             <th scope="col">Status</th>
                             <th scope="col">Paid</th>
-                            {user?.role === "organisation" && <th scope="col">Action</th>}
+                            {(user?.role === "hospital" || user?.role === "organisation") && (
+                                <th scope="col">Action</th>
+                            )}
                         </tr>
                     </thead>
                     <tbody>
@@ -99,11 +122,27 @@ const BloodRequests = () => {
                                         </button>
                                     </td>
                                 )}
+                                {user?.role === "hospital" && (
+                                    <td>
+                                        {record.hospital ? (
+                                            <span className="text-muted">N/A</span>
+                                        ) : (
+                                            record.paymentStatus !== "paid" && (
+                                                <button
+                                                    className="btn btn-outline-success btn-sm"
+                                                    onClick={() => handleMarkPaid(record._id)}
+                                                >
+                                                    Mark Paid
+                                                </button>
+                                            )
+                                        )}
+                                    </td>
+                                )}
                             </tr>
                         ))}
                         {data?.length === 0 && (
                             <tr>
-                                <td colSpan={user?.role === "organisation" ? 8 : 7} className="text-center">No active requests found.</td>
+                                <td colSpan={user?.role === "hospital" || user?.role === "organisation" ? 8 : 7} className="text-center">No active requests found.</td>
                             </tr>
                         )}
                     </tbody>
