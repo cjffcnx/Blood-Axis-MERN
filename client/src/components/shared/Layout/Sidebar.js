@@ -57,6 +57,13 @@ const Sidebar = () => {
                 <i className="fa-solid fa-chart-line"></i>
                 <Link to="/forecast">Forecast</Link>
               </div>
+              <div
+                className={`menu-item ${location.pathname === "/request-user" && "active"
+                  }`}
+              >
+                <i className="fa-solid fa-envelope"></i>
+                <Link to="/request-user">Request User</Link>
+              </div>
             </>
           )}
           {user?.role === "admin" && (

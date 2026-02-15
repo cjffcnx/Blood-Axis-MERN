@@ -18,6 +18,7 @@ import Hospitals from "./pages/Dashboard/Hospitals";
 import OrganisationPage from "./pages/Dashboard/OrganisationPage";
 import Donation from "./pages/Donation";
 import Analytics from "./pages/Dashboard/Analytics";
+import DonorDetails from "./pages/Dashboard/DonorDetails";
 import DonarList from "./pages/Admin/DonarList";
 import HospitalList from "./pages/Admin/HospitalList";
 import OrgList from "./pages/Admin/OrgList";
@@ -133,6 +134,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <BloodForecast />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/request-user"
+            element={
+              <ProtectedRoute>
+                <DonorDetails />
               </ProtectedRoute>
             }
           />
@@ -259,9 +268,9 @@ function App() {
           <Route
             path="/payment-success"
             element={
-              <ProtectedRoute>
+              <PublicRoute>
                 <ESewaSuccess />
-              </ProtectedRoute>
+              </PublicRoute>
             }
           />
           <Route path="/terms" element={<Terms />} />

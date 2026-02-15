@@ -8,6 +8,7 @@ const {
   updateProfileController,
   forgotPasswordController,
   resetPasswordController,
+  sendEmailController,
 } = require("../controllers/authController");
 const authMiddelware = require("../middlewares/authMiddelware");
 
@@ -33,5 +34,8 @@ router.get("/current-user", authMiddelware, currentUserController);
 
 //UPDATE PROFILE || PUT
 router.put("/update-profile", authMiddelware, updateProfileController);
+
+//SEND EMAIL || POST
+router.post("/send-email", authMiddelware, sendEmailController);
 
 module.exports = router;

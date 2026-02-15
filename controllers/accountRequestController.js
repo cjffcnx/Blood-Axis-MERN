@@ -61,8 +61,27 @@ const createAccountRequestController = async (req, res) => {
 // Get all requests (Admin)
 const getAccountRequestsController = async (req, res) => {
     try {
+        const rawSearch = typeof req.query.search === "string" ? req.query.search.trim() : "";
+        const escapedSearch = rawSearch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const searchRegex = rawSearch ? new RegExp(escapedSearch, "i") : null;
+        const query = {
+            status: "pending",
+            ...(searchRegex
+                ? {
+                    $or: [
+                        { organisationName: { $regex: searchRegex } },
+                        { hospitalName: { $regex: searchRegex } },
+                        { name: { $regex: searchRegex } },
+                        { email: { $regex: searchRegex } },
+                        { phone: { $regex: searchRegex } },
+                        { role: { $regex: searchRegex } },
+                    ],
+                }
+                : {}),
+        };
+
         const requests = await accountRequestModel
-            .find({ status: "pending" })
+            .find(query)
             .sort({ createdAt: -1 });
         res.status(200).send({
             success: true,

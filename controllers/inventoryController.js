@@ -165,16 +165,84 @@ const getRecentInventoryController = async (req, res) => {
   }
 };
 
+// GET DONAR RECORDS WITH BLOOD GROUP FROM INVENTORIES
+const getDonarsWithBloodGroupController = async (req, res) => {
+  try {
+    const organisation = req.body.userId;
+
+    // Find all donors for this organisation
+    const donorId = await inventoryModel.distinct("donar", {
+      organisation,
+    });
+
+    // Get user details for each donor
+    const donars = await userModel.find({ _id: { $in: donorId } });
+
+    // For each donor, get their blood groups from inventories
+    const donarsWithBloodGroups = await Promise.all(
+      donars.map(async (donor) => {
+        // Get the most recent blood group(s) from inventories
+        const bloodGroupDocuments = await inventoryModel
+          .find({
+            donar: donor._id,
+            organisation,
+            inventoryType: "in", // Only donation records
+          })
+          .sort({ createdAt: -1 })
+          .limit(1);
+
+        const bloodGroup = bloodGroupDocuments.length > 0
+          ? bloodGroupDocuments[0].bloodGroup
+          : "Not Available";
+
+        return {
+          ...donor.toObject(),
+          bloodGroup, // Override with blood group from inventories
+        };
+      })
+    );
+
+    return res.status(200).send({
+      success: true,
+      message: "Donar Record Fetched Successfully",
+      donars: donarsWithBloodGroups,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({
+      success: false,
+      message: "Error in Donar records",
+      error,
+    });
+  }
+};
+
 // GET DONAR REOCRDS
 const getDonarsController = async (req, res) => {
   try {
+    const rawSearch = typeof req.query.search === "string" ? req.query.search.trim() : "";
     const organisation = req.body.userId;
     //find donars
     const donorId = await inventoryModel.distinct("donar", {
       organisation,
     });
     // console.log(donorId);
-    const donars = await userModel.find({ _id: { $in: donorId } });
+    const escapedSearch = rawSearch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const searchRegex = rawSearch ? new RegExp(escapedSearch, "i") : null;
+    const donarsQuery = {
+      _id: { $in: donorId },
+      ...(searchRegex
+        ? {
+          $or: [
+            { name: { $regex: searchRegex } },
+            { email: { $regex: searchRegex } },
+            { phone: { $regex: searchRegex } },
+            { address: { $regex: searchRegex } },
+          ],
+        }
+        : {}),
+    };
+    const donars = await userModel.find(donarsQuery);
 
     return res.status(200).send({
       success: true,
@@ -193,9 +261,61 @@ const getDonarsController = async (req, res) => {
 
 const getHospitalController = async (req, res) => {
   try {
+    const rawSearch = typeof req.query.search === "string" ? req.query.search.trim() : "";
+    const escapedSearch = rawSearch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const searchRegex = rawSearch ? new RegExp(escapedSearch, "i") : null;
     // Fetch all hospitals from database
     const hospitals = await userModel
-      .find({ role: "hospital" })
+      .find({
+        role: "hospital",
+        ...(searchRegex
+          ? {
+            $or: [
+              { hospitalName: { $regex: searchRegex } },
+              { email: { $regex: searchRegex } },
+              { phone: { $regex: searchRegex } },
+              { address: { $regex: searchRegex } },
+            ],
+          }
+          : {}),
+      })
+      .sort({ createdAt: -1 });
+
+    return res.status(200).send({
+      success: true,
+      message: "Hospitals Data Fetched Successfully",
+      hospitals,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({
+      success: false,
+      message: "Error In get Hospital API",
+      error,
+    });
+  }
+};
+
+const getPublicHospitalsController = async (req, res) => {
+  try {
+    const rawSearch = typeof req.query.search === "string" ? req.query.search.trim() : "";
+    const escapedSearch = rawSearch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const searchRegex = rawSearch ? new RegExp(escapedSearch, "i") : null;
+
+    const hospitals = await userModel
+      .find({
+        role: "hospital",
+        ...(searchRegex
+          ? {
+            $or: [
+              { hospitalName: { $regex: searchRegex } },
+              { email: { $regex: searchRegex } },
+              { phone: { $regex: searchRegex } },
+              { address: { $regex: searchRegex } },
+            ],
+          }
+          : {}),
+      })
       .sort({ createdAt: -1 });
 
     return res.status(200).send({
@@ -264,7 +384,9 @@ module.exports = {
   createInventoryController,
   getInventoryController,
   getDonarsController,
+  getDonarsWithBloodGroupController,
   getHospitalController,
+  getPublicHospitalsController,
   getOrgnaisationController,
   getOrgnaisationForHospitalController,
   getInventoryHospitalController,

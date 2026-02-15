@@ -4,7 +4,9 @@ const {
   createInventoryController,
   getInventoryController,
   getDonarsController,
+  getDonarsWithBloodGroupController,
   getHospitalController,
+  getPublicHospitalsController,
   getOrgnaisationController,
   getOrgnaisationForHospitalController,
   getInventoryHospitalController,
@@ -36,8 +38,14 @@ router.post(
 //GET DONAR RECORDS
 router.get("/get-donars", authMiddelware, getDonarsController);
 
+//GET DONAR RECORDS WITH BLOOD GROUP FROM INVENTORIES
+router.get("/get-donars-with-bloodgroup", authMiddelware, getDonarsWithBloodGroupController);
+
 //GET HOSPITAL RECORDS
 router.get("/get-hospitals", authMiddelware, getHospitalController);
+
+//GET HOSPITAL RECORDS (PUBLIC)
+router.get("/public-hospitals", getPublicHospitalsController);
 
 //GET orgnaisation RECORDS
 router.get("/get-orgnaisation", authMiddelware, getOrgnaisationController);

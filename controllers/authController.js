@@ -106,7 +106,7 @@ const requestRegisterOtpController = async (req, res) => {
     if (existingUser) {
       return res.status(409).send({
         success: false,
-        message: "User already exists",
+        message: "Email already registered",
       });
     }
 
@@ -527,6 +527,57 @@ const updateProfileController = async (req, res) => {
   }
 };
 
+// SEND EMAIL (for organisations to contact donors)
+const sendEmailController = async (req, res) => {
+  try {
+    const { to, subject, html, text } = req.body;
+
+    // Validate input
+    if (!to || !subject || (!html && !text)) {
+      return res.status(400).send({
+        success: false,
+        message: "Email address, subject, and message content are required",
+      });
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(to)) {
+      return res.status(400).send({
+        success: false,
+        message: "Invalid email address",
+      });
+    }
+
+    const result = await sendEmail({
+      to,
+      subject,
+      html: html || text,
+      text: text || html,
+    });
+
+    if (result.success) {
+      return res.status(200).send({
+        success: true,
+        message: "Email sent successfully",
+      });
+    } else {
+      logger.error(`Email send failed: ${result.error}`);
+      return res.status(503).send({
+        success: false,
+        message: "Failed to send email. Please try again later.",
+      });
+    }
+  } catch (error) {
+    logger.error(`Send email error: ${error.message}`);
+    return res.status(500).send({
+      success: false,
+      message: "Error sending email",
+      error,
+    });
+  }
+};
+
 module.exports = {
   registerController,
   requestRegisterOtpController,
@@ -536,4 +587,5 @@ module.exports = {
   updateProfileController,
   forgotPasswordController,
   resetPasswordController,
+  sendEmailController,
 };

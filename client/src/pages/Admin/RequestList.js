@@ -49,6 +49,7 @@ const RequestList = () => {
                             <th scope="col">Blood Group</th>
                             <th scope="col">Phone</th>
                             <th scope="col">Date</th>
+                            <th scope="col">Hospital</th>
                             <th scope="col">Status</th>
                             <th scope="col">Document</th>
                             <th scope="col">Action</th>
@@ -61,6 +62,7 @@ const RequestList = () => {
                                 <td>{record.bloodGroup}</td>
                                 <td>{record.phone}</td>
                                 <td>{moment(record.createdAt).format("DD/MM/YYYY hh:mm A")}</td>
+                                <td>{record.hospitalName || "N/A"}</td>
                                 <td>
                                     <span className={`badge ${record.status === 'pending' ? 'bg-warning' : record.status === 'approved' ? 'bg-success' : 'bg-danger'}`}>
                                         {record.status}

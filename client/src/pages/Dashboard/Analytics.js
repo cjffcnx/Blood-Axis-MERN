@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import Header from "../../components/shared/Layout/Header";
+import Layout from "../../components/shared/Layout/Layout";
 import API from "./../../services/API";
 import moment from "moment";
 
@@ -51,8 +51,7 @@ const Analytics = () => {
     getBloodRecords();
   }, []);
   return (
-    <>
-      <Header />
+    <Layout>
       <div className="d-flex flex-row flex-wrap">
         {data?.map((record, i) => (
           <div
@@ -102,7 +101,7 @@ const Analytics = () => {
           </tbody>
         </table>
       </div>
-    </>
+    </Layout>
   );
 };
 

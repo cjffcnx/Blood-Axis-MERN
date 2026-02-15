@@ -60,6 +60,7 @@ const createDonorInterest = async (req, res) => {
 const getInterestedDonors = async (req, res) => {
     try {
         const organisationId = req.body.userId; // from auth middleware
+        const rawSearch = typeof req.query.search === "string" ? req.query.search.trim() : "";
 
         // Verify user is organisation
         const organisation = await userModel.findOne({
@@ -74,10 +75,68 @@ const getInterestedDonors = async (req, res) => {
             });
         }
 
-        const interests = await donorInterestModel
-            .find({ organisation: organisationId })
-            .populate("donor", "name email phone address preferredCity")
-            .sort({ createdAt: -1 });
+        if (!rawSearch) {
+            const interests = await donorInterestModel
+                .find({ organisation: organisationId })
+                .populate("donor", "name email phone address preferredCity")
+                .sort({ createdAt: -1 });
+
+            return res.status(200).send({
+                success: true,
+                interests,
+            });
+        }
+
+        const escapedSearch = rawSearch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const searchRegex = new RegExp(escapedSearch, "i");
+        const organisationObjectId = new mongoose.Types.ObjectId(organisationId);
+
+        const interests = await donorInterestModel.aggregate([
+            { $match: { organisation: organisationObjectId } },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "donor",
+                    foreignField: "_id",
+                    as: "donor",
+                },
+            },
+            { $unwind: "$donor" },
+            {
+                $match: {
+                    $or: [
+                        { "donor.name": { $regex: searchRegex } },
+                        { "donor.email": { $regex: searchRegex } },
+                        { "donor.phone": { $regex: searchRegex } },
+                        { "donor.address": { $regex: searchRegex } },
+                        { "donor.preferredCity": { $regex: searchRegex } },
+                        { bloodGroup: { $regex: searchRegex } },
+                        { gender: { $regex: searchRegex } },
+                        { status: { $regex: searchRegex } },
+                    ],
+                },
+            },
+            { $sort: { createdAt: -1 } },
+            {
+                $project: {
+                    donor: {
+                        name: "$donor.name",
+                        email: "$donor.email",
+                        phone: "$donor.phone",
+                        address: "$donor.address",
+                        preferredCity: "$donor.preferredCity",
+                    },
+                    organisation: 1,
+                    dateOfBirth: 1,
+                    gender: 1,
+                    availability: 1,
+                    bloodGroup: 1,
+                    status: 1,
+                    createdAt: 1,
+                    updatedAt: 1,
+                },
+            },
+        ]);
 
         return res.status(200).send({
             success: true,

@@ -6,10 +6,14 @@ import { toast } from "react-toastify";
 
 const AccountRequests = () => {
     const [data, setData] = useState([]);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [appliedSearch, setAppliedSearch] = useState("");
 
-    const getRequests = async () => {
+    const getRequests = async (search = "") => {
         try {
-            const { data } = await API.get("/account-requests");
+            const { data } = await API.get("/account-requests", {
+                params: search ? { search } : {},
+            });
             if (data?.success) {
                 setData(data?.requests);
             }
@@ -19,8 +23,22 @@ const AccountRequests = () => {
     };
 
     useEffect(() => {
-        getRequests();
+        getRequests("");
     }, []);
+
+    useEffect(() => {
+        getRequests(appliedSearch);
+    }, [appliedSearch]);
+
+    const handleSearchSubmit = (event) => {
+        event.preventDefault();
+        setAppliedSearch(searchTerm.trim());
+    };
+
+    const handleSearchClear = () => {
+        setSearchTerm("");
+        setAppliedSearch("");
+    };
 
     const handleStatus = async (id, status) => {
         try {
@@ -47,7 +65,20 @@ const AccountRequests = () => {
     return (
         <Layout>
             <div className="container mt-4">
-                <h1>Account Requests</h1>
+                <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
+                    <h1 className="mb-0">Account Requests</h1>
+                    <form className="d-flex flex-wrap align-items-center gap-2 ms-auto" onSubmit={handleSearchSubmit}>
+                        <input
+                            className="form-control"
+                            style={{ minWidth: "260px" }}
+                            placeholder="Search name, email, phone, role..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                        <button className="btn btn-primary" type="submit">Search</button>
+                        <button className="btn btn-outline-secondary" type="button" onClick={handleSearchClear}>Clear</button>
+                    </form>
+                </div>
                 <table className="table table-striped">
                     <thead>
                         <tr>

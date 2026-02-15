@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     AppBar,
     Toolbar,
@@ -26,10 +26,12 @@ import {
     Search,
     VolunteerActivism,
     LocalHospital,
-    Bloodtype
+    Bloodtype,
+    SmartToy
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import API from '../services/API';
+import axios from "axios";
 import { toast } from 'react-toastify';
 
 const WelcomePage = () => {
@@ -38,11 +40,42 @@ const WelcomePage = () => {
         name: "",
         phone: "",
         bloodGroup: "",
+        quantity: "",
         message: "",
     });
+    const [selectedHospital, setSelectedHospital] = useState("");
+    const [hospitals, setHospitals] = useState([]);
+    const [loadingHospitals, setLoadingHospitals] = useState(false);
     const [fileName, setFileName] = useState("No file chosen");
     const [file, setFile] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
+    const [chatOpen, setChatOpen] = useState(false);
+    const [paymentLoading, setPaymentLoading] = useState(false);
+
+    const BLOOD_RATE = 200;
+
+    const calculateAmount = () => {
+        return Number(formData.quantity) * BLOOD_RATE;
+    };
+
+    useEffect(() => {
+        const fetchHospitals = async () => {
+            try {
+                setLoadingHospitals(true);
+                const { data } = await API.get("/inventory/public-hospitals");
+                if (data?.success) {
+                    setHospitals(data.hospitals || []);
+                }
+            } catch (error) {
+                console.log(error);
+                toast.error("Unable to load hospitals");
+            } finally {
+                setLoadingHospitals(false);
+            }
+        };
+
+        fetchHospitals();
+    }, []);
 
     const bloodBanks = [
         {
@@ -793,6 +826,12 @@ const WelcomePage = () => {
         }
     };
 
+    const resolveHospitalName = () => {
+        if (!selectedHospital) return "";
+        const match = hospitals.find((hospital) => hospital._id === selectedHospital);
+        return match?.hospitalName || match?.name || "";
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -800,13 +839,19 @@ const WelcomePage = () => {
             data.append('name', formData.name);
             data.append('phone', formData.phone);
             data.append('bloodGroup', formData.bloodGroup);
+            if (formData.quantity) data.append('quantity', formData.quantity);
+            const hospitalName = resolveHospitalName();
+            if (hospitalName) data.append('hospitalName', hospitalName);
             data.append('message', formData.message);
+            if (selectedHospital) data.append('hospitalId', selectedHospital);
             if (file) data.append('attachment', file);
+            data.append('paymentStatus', 'non-paid');
 
             const res = await API.post("/request/create-request", data);
             if (res.data?.success) {
                 toast.success("Blood Request Submitted Successfully");
-                setFormData({ name: "", phone: "", bloodGroup: "", message: "" });
+                setFormData({ name: "", phone: "", bloodGroup: "", quantity: "", message: "" });
+                setSelectedHospital("");
                 setFileName("No file chosen");
                 setFile(null);
             } else {
@@ -815,6 +860,82 @@ const WelcomePage = () => {
         } catch (error) {
             console.log(error);
             toast.error("Error submitting request");
+        }
+    };
+
+    const handlePayment = async () => {
+        if (!formData.name || !formData.phone || !formData.bloodGroup) {
+            toast.error("Please fill all required fields");
+            return;
+        }
+
+        if (!selectedHospital) {
+            toast.error("Please select a hospital before paying");
+            return;
+        }
+
+        if (!formData.quantity || Number(formData.quantity) <= 0) {
+            toast.error("Please enter a valid quantity for payment");
+            return;
+        }
+
+        if (file) {
+            // Payment flow does not upload files; enforce requisition form upload on direct submit.
+            toast.error("Please submit the request with the requisition form (no online payment when a file is required)");
+            return;
+        }
+
+        setPaymentLoading(true);
+
+        try {
+            const amount = calculateAmount();
+            const transactionId = "EMERGENCY-" + Date.now();
+            const productName = `Emergency Blood Request - ${formData.bloodGroup}`;
+            const hospitalName = resolveHospitalName();
+
+            sessionStorage.setItem(
+                "pendingEmergencyRequestPayload",
+                JSON.stringify({
+                    name: formData.name,
+                    phone: formData.phone,
+                    bloodGroup: formData.bloodGroup,
+                    quantity: formData.quantity,
+                    message: formData.message,
+                    hospitalName,
+                    hospitalId: selectedHospital,
+                })
+            );
+
+            const response = await axios.post("http://localhost:5000/api/v1/esewa/initiate", {
+                amount,
+                productName,
+                transactionId,
+            });
+
+            if (response.data?.success && response.data?.payload) {
+                const payload = response.data.payload;
+                const form = document.createElement("form");
+                form.method = "POST";
+                form.action = "https://rc-epay.esewa.com.np/api/epay/main/v2/form";
+
+                Object.entries(payload).forEach(([key, value]) => {
+                    const input = document.createElement("input");
+                    input.type = "hidden";
+                    input.name = key;
+                    input.value = value;
+                    form.appendChild(input);
+                });
+
+                document.body.appendChild(form);
+                form.submit();
+            } else {
+                toast.error("Could not initiate eSewa payment");
+            }
+        } catch (error) {
+            console.log("Error:", error);
+            toast.error(error.response?.data?.message || error.response?.data?.error || "eSewa payment error");
+        } finally {
+            setPaymentLoading(false);
         }
     };
 
@@ -1050,6 +1171,38 @@ const WelcomePage = () => {
                                     </FormControl>
                                 </Grid>
 
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        fullWidth
+                                        label="Quantity (ML)"
+                                        name="quantity"
+                                        type="number"
+                                        value={formData.quantity}
+                                        onChange={handleChange}
+                                        inputProps={{ min: 0 }}
+                                    />
+                                </Grid>
+
+                                <Grid item xs={12} sm={6}>
+                                    <FormControl fullWidth>
+                                        <InputLabel>Hospital (optional)</InputLabel>
+                                        <Select
+                                            value={selectedHospital}
+                                            label="Hospital (optional)"
+                                            onChange={(e) => setSelectedHospital(e.target.value)}
+                                        >
+                                            <MenuItem value="">
+                                                {loadingHospitals ? "Loading hospitals..." : "Select hospital"}
+                                            </MenuItem>
+                                            {hospitals.map((hospital) => (
+                                                <MenuItem key={hospital._id} value={hospital._id}>
+                                                    {hospital.hospitalName || hospital.name}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
+
                                 <Grid item xs={12}>
                                     <Button
                                         variant="outlined"
@@ -1080,15 +1233,26 @@ const WelcomePage = () => {
                                 </Grid>
 
                                 <Grid item xs={12}>
-                                    <Button
-                                        type="submit"
-                                        variant="contained"
-                                        color="error"
-                                        fullWidth
-                                        sx={{ py: 1.5, fontSize: '1rem', borderRadius: 3 }}
-                                    >
-                                        Submit Request
-                                    </Button>
+                                    <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+                                        <Button
+                                            type="submit"
+                                            variant="contained"
+                                            color="error"
+                                            sx={{ py: 1.5, fontSize: '1rem', borderRadius: 3, flex: 1 }}
+                                        >
+                                            Submit Request
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="outlined"
+                                            color="error"
+                                            disabled={paymentLoading}
+                                            onClick={handlePayment}
+                                            sx={{ py: 1.5, fontSize: '1rem', borderRadius: 3, flex: 1 }}
+                                        >
+                                            {paymentLoading ? "Processing..." : "Pay with eSewa"}
+                                        </Button>
+                                    </Box>
                                 </Grid>
                             </Grid>
                         </form>
@@ -1096,6 +1260,79 @@ const WelcomePage = () => {
                 </Box>
             </Container>
 
+            {/* Chatbot Widget */}
+            {chatOpen && (
+                <Box
+                    sx={{
+                        position: 'fixed',
+                        bottom: 90,
+                        right: 24,
+                        width: { xs: '92vw', sm: 380 },
+                        height: 520,
+                        bgcolor: 'white',
+                        borderRadius: 2,
+                        boxShadow: 6,
+                        overflow: 'hidden',
+                        zIndex: 1300
+                    }}
+                >
+                    <Box
+                        sx={{
+                            bgcolor: 'error.main',
+                            color: 'white',
+                            p: 1.5,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between'
+                        }}
+                    >
+                        <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                            How may I help you?
+                        </Typography>
+                        <Button
+                            size="small"
+                            variant="text"
+                            onClick={() => setChatOpen(false)}
+                            sx={{ color: 'white', minWidth: 'auto' }}
+                        >
+                            Close
+                        </Button>
+                    </Box>
+                    <Box sx={{ height: 'calc(100% - 48px)' }}>
+                        <iframe
+                            title="AI Chatbot"
+                            src="https://sreejang-ai-rag-chatbot-voice-and-text.hf.space"
+                            frameBorder="0"
+                            width="100%"
+                            height="100%"
+                        />
+                    </Box>
+                </Box>
+            )}
+            <Box
+                sx={{
+                    position: 'fixed',
+                    bottom: 24,
+                    right: 24,
+                    zIndex: 1300
+                }}
+            >
+                <Button
+                    variant="contained"
+                    color="error"
+                    onClick={() => setChatOpen((open) => !open)}
+                    sx={{
+                        borderRadius: '999px',
+                        minWidth: 56,
+                        width: 56,
+                        height: 56,
+                        boxShadow: 6
+                    }}
+                    aria-label="Open chatbot"
+                >
+                    <SmartToy />
+                </Button>
+            </Box>
         </Box>
     );
 };

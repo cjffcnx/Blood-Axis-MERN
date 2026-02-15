@@ -6,7 +6,7 @@ const mongoose = require("mongoose");
 // CREATE REQUEST (Public)
 const createRequestController = async (req, res) => {
     try {
-        const { name, phone, bloodGroup, message } = req.body;
+        const { name, phone, bloodGroup, message, email, quantity, hospitalName, paymentStatus, hospitalId } = req.body;
         // Validation
         if (!name || !phone || !bloodGroup) {
             return res.status(400).send({
@@ -17,13 +17,27 @@ const createRequestController = async (req, res) => {
 
         // Handle file
         const attachment = req.file ? `/uploads/${req.file.filename}` : null;
+        const normalizedPaymentStatus = paymentStatus === "paid" ? "paid" : "non-paid";
+
+        if (!attachment && normalizedPaymentStatus !== "paid") {
+            return res.status(400).send({
+                success: false,
+                message: "Requisition form is required",
+            });
+        }
 
         const request = new requestModel({
             name,
             phone,
             bloodGroup,
             message,
-            attachment
+            email,
+            quantity,
+            hospitalName,
+            attachment,
+            paymentStatus: normalizedPaymentStatus,
+            requestedHospital: hospitalId || null,
+            status: normalizedPaymentStatus === "paid" ? "approved" : "pending",
         });
 
         await request.save();
@@ -42,10 +56,14 @@ const createRequestController = async (req, res) => {
     }
 };
 
-// GET ALL REQUESTS (Admin)
+// GET ALL PUBLIC REQUESTS (Admin)
 const getRequestsController = async (req, res) => {
     try {
-        const requests = await requestModel.find({}).sort({ createdAt: -1 });
+        const requests = await requestModel
+            .find({
+                $or: [{ hospital: { $exists: false } }, { hospital: null }],
+            })
+            .sort({ createdAt: -1 });
         return res.status(200).send({
             success: true,
             message: "All Blood Requests Fetched Successfully",
@@ -61,10 +79,28 @@ const getRequestsController = async (req, res) => {
     }
 };
 
-// GET APPROVED REQUESTS (Org/Hospital)
+// GET APPROVED PUBLIC REQUESTS (Org/Hospital)
 const getApprovedRequestsController = async (req, res) => {
     try {
-        const requests = await requestModel.find({ status: "approved" }).sort({ createdAt: -1 });
+        const user = await userModel.findById(req.body.userId).select("role");
+        const query = {
+            status: "approved",
+            $or: [{ hospital: { $exists: false } }, { hospital: null }],
+        };
+
+        if (user?.role === "organisation") {
+            query.organisation = req.body.userId;
+        }
+
+        if (user?.role === "hospital") {
+            query.requestedHospital = req.body.userId;
+            query.$or = [
+                { status: "approved" },
+                { paymentStatus: "paid" },
+            ];
+        }
+
+        const requests = await requestModel.find(query).sort({ createdAt: -1 });
         return res.status(200).send({
             success: true,
             message: "Approved Blood Requests Fetched Successfully",
@@ -83,13 +119,47 @@ const getApprovedRequestsController = async (req, res) => {
 // UPDATE STATUS (Admin)
 const updateRequestStatusController = async (req, res) => {
     try {
-        const { status } = req.body;
+        const { status, organisationId } = req.body;
         const { id } = req.params;
-        const request = await requestModel.findByIdAndUpdate(
-            id,
-            { status },
-            { new: true }
-        );
+
+        const existingRequest = await requestModel.findById(id);
+        if (!existingRequest) {
+            return res.status(404).send({
+                success: false,
+                message: "Request not found",
+            });
+        }
+
+        if (existingRequest.hospital) {
+            return res.status(400).send({
+                success: false,
+                message: "Only public emergency requests can be approved or rejected here",
+            });
+        }
+
+        const update = { status };
+
+        if (status === "approved" && organisationId) {
+            const organisation = await userModel.findOne({
+                _id: organisationId,
+                role: "organisation",
+            });
+
+            if (!organisation) {
+                return res.status(404).send({
+                    success: false,
+                    message: "Organisation not found",
+                });
+            }
+
+            update.organisation = organisationId;
+        }
+
+        if (status === "rejected") {
+            update.organisation = null;
+        }
+
+        const request = await requestModel.findByIdAndUpdate(id, update, { new: true });
         return res.status(200).send({
             success: true,
             message: "Request Status Updated",

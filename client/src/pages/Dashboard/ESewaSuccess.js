@@ -10,6 +10,8 @@ const ESewaSuccess = () => {
     const [status, setStatus] = useState("checking");
     const [message, setMessage] = useState("");
     const [creatingRequest, setCreatingRequest] = useState(false);
+    const [flowType, setFlowType] = useState("supply");
+    const [receiptData, setReceiptData] = useState(null);
 
     // eSewa can return either a txnId/transaction_uuid query param or a base64-encoded `data` blob.
     const extractTransactionId = () => {
@@ -49,10 +51,47 @@ const ESewaSuccess = () => {
                     setStatus("success");
                     setMessage("Payment verified. Blood request will be created.");
 
-                    const pendingPayloadRaw = sessionStorage.getItem("pendingRequestPayload");
-                    if (pendingPayloadRaw) {
+                    const emergencyPayloadRaw = sessionStorage.getItem("pendingEmergencyRequestPayload");
+                    const supplyPayloadRaw = sessionStorage.getItem("pendingRequestPayload");
+
+                    if (emergencyPayloadRaw) {
+                        setFlowType("emergency");
                         try {
-                            const parsedPayload = JSON.parse(pendingPayloadRaw);
+                            const parsedPayload = JSON.parse(emergencyPayloadRaw);
+                            setCreatingRequest(true);
+                            const createRes = await API.post("/request/create-request", {
+                                ...parsedPayload,
+                                paymentStatus: "paid",
+                            });
+                            setCreatingRequest(false);
+                            if (createRes.data?.success) {
+                                setMessage("Payment verified and emergency request submitted successfully.");
+                                setReceiptData({
+                                    flow: "Emergency",
+                                    name: parsedPayload.name,
+                                    phone: parsedPayload.phone,
+                                    bloodGroup: parsedPayload.bloodGroup,
+                                    quantity: parsedPayload.quantity,
+                                    hospitalName: parsedPayload.hospitalName,
+                                    transactionId: txnId,
+                                    paidAt: new Date().toISOString(),
+                                });
+                                sessionStorage.removeItem("pendingEmergencyRequestPayload");
+                            } else {
+                                setMessage(createRes.data?.message || "Payment verified but failed to save request");
+                            }
+                        } catch (err) {
+                            setCreatingRequest(false);
+                            console.log("Emergency request creation after payment failed", err);
+                            setMessage("Payment verified but failed to save request");
+                        }
+                        return;
+                    }
+
+                    if (supplyPayloadRaw) {
+                        setFlowType("supply");
+                        try {
+                            const parsedPayload = JSON.parse(supplyPayloadRaw);
                             setCreatingRequest(true);
                             const createRes = await API.post("/request/hospital-request", {
                                 ...parsedPayload,
@@ -61,6 +100,14 @@ const ESewaSuccess = () => {
                             setCreatingRequest(false);
                             if (createRes.data?.success) {
                                 setMessage("Payment verified and request submitted to the selected organisation.");
+                                setReceiptData({
+                                    flow: "Supply",
+                                    bloodGroup: parsedPayload.bloodGroup,
+                                    quantity: parsedPayload.quantity,
+                                    organisationId: parsedPayload.organisationId,
+                                    transactionId: txnId,
+                                    paidAt: new Date().toISOString(),
+                                });
                                 sessionStorage.removeItem("pendingRequestPayload");
                             } else {
                                 setMessage(createRes.data?.message || "Payment verified but failed to save request");
@@ -70,9 +117,10 @@ const ESewaSuccess = () => {
                             console.log("Request creation after payment failed", err);
                             setMessage("Payment verified but failed to save request");
                         }
-                    } else {
-                        setMessage("Payment verified. Please resubmit request if it does not appear.");
+                        return;
                     }
+
+                    setMessage("Payment verified. Please resubmit request if it does not appear.");
                 } else {
                     setStatus("failed");
                     setMessage(response.data?.message || "Payment verification failed");
@@ -86,6 +134,32 @@ const ESewaSuccess = () => {
 
         verifyPayment();
     }, [searchParams]);
+
+    const downloadReceipt = () => {
+        if (!receiptData) return;
+        const lines = [
+            "Blood Bank Payment Receipt",
+            `Flow: ${receiptData.flow}`,
+            `Transaction ID: ${receiptData.transactionId}`,
+            `Paid At: ${receiptData.paidAt}`,
+            receiptData.name ? `Name: ${receiptData.name}` : null,
+            receiptData.phone ? `Phone: ${receiptData.phone}` : null,
+            receiptData.bloodGroup ? `Blood Group: ${receiptData.bloodGroup}` : null,
+            receiptData.quantity ? `Quantity: ${receiptData.quantity} ML` : null,
+            receiptData.hospitalName ? `Hospital: ${receiptData.hospitalName}` : null,
+            receiptData.organisationId ? `Organisation ID: ${receiptData.organisationId}` : null,
+        ].filter(Boolean);
+
+        const blob = new Blob([lines.join("\n")], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `receipt-${receiptData.transactionId || Date.now()}.txt`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+    };
 
     return (
         <Layout>
@@ -106,6 +180,11 @@ const ESewaSuccess = () => {
                                         <i className="fa-solid fa-circle-check text-success" style={{ fontSize: 48 }}></i>
                                         <h4 className="mt-3">Payment Successful</h4>
                                         <p className="text-muted">{message}</p>
+                                        {receiptData && (
+                                            <button className="btn btn-outline-success mt-3" onClick={downloadReceipt}>
+                                                Download Receipt
+                                            </button>
+                                        )}
                                     </>
                                 )}
 
@@ -118,8 +197,18 @@ const ESewaSuccess = () => {
                                 )}
 
                                 <div className="d-grid gap-2 mt-4">
-                                    <button className="btn btn-primary" onClick={() => navigate("/request-supply")}>Go Back</button>
-                                    <button className="btn btn-outline-secondary" onClick={() => navigate("/home")}>Dashboard</button>
+                                    <button
+                                        className="btn btn-primary"
+                                        onClick={() => navigate(flowType === "emergency" ? "/" : "/request-supply")}
+                                    >
+                                        Go Back
+                                    </button>
+                                    <button
+                                        className="btn btn-outline-secondary"
+                                        onClick={() => navigate(flowType === "emergency" ? "/" : "/home")}
+                                    >
+                                        {flowType === "emergency" ? "Home" : "Dashboard"}
+                                    </button>
                                 </div>
                             </div>
                         </div>

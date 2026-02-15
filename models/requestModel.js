@@ -32,6 +32,10 @@ const requestSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: "users",
         },
+        requestedHospital: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "users",
+        },
         organisation: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "users",

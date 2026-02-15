@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { handleLogin } from "../../../services/authService";
 import { isValidEmail, getPasswordError } from "../../../utils/validation";
 import { requestRegisterOtp, verifyRegisterOtp } from "../../../redux/features/auth/authActions";
+import { toast } from "react-toastify";
 
 const Form = ({ formType, submitBtn, formTitle }) => {
   const dispatch = useDispatch();
@@ -93,6 +94,9 @@ const Form = ({ formType, submitBtn, formTitle }) => {
       setRegisterStep(2);
       setStatusMessage(data?.message || "OTP sent to your email");
     } catch (error) {
+      if (error === "Email already registered") {
+        toast.error("Email already registered");
+      }
       setStatusMessage(error || "Unable to send OTP. Please try again.");
     }
   };
