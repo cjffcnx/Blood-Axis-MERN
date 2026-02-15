@@ -51,8 +51,9 @@ const WelcomePage = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [chatOpen, setChatOpen] = useState(false);
     const [paymentLoading, setPaymentLoading] = useState(false);
+    const [paymentMethod, setPaymentMethod] = useState("onsite");
 
-    const BLOOD_RATE = 200;
+    const BLOOD_RATE = 400;
 
     const calculateAmount = () => {
         return Number(formData.quantity) * BLOOD_RATE;
@@ -835,6 +836,10 @@ const WelcomePage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            if (paymentMethod === "onsite" && !file) {
+                toast.error("Please upload the requisition form");
+                return;
+            }
             const data = new FormData();
             data.append('name', formData.name);
             data.append('phone', formData.phone);
@@ -1184,6 +1189,17 @@ const WelcomePage = () => {
                                 </Grid>
 
                                 <Grid item xs={12} sm={6}>
+                                    <Box sx={{ p: 1.5, borderRadius: 1, bgcolor: '#f9f9f9', height: '100%' }}>
+                                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                            Amount: Rs {formData.quantity ? calculateAmount() : 0}
+                                        </Typography>
+                                        <Typography variant="caption" sx={{ fontStyle: 'italic', color: 'text.secondary' }}>
+                                            Please proceed through payment for faster response.
+                                        </Typography>
+                                    </Box>
+                                </Grid>
+
+                                <Grid item xs={12} sm={6}>
                                     <FormControl fullWidth>
                                         <InputLabel>Hospital (optional)</InputLabel>
                                         <Select
@@ -1204,21 +1220,37 @@ const WelcomePage = () => {
                                 </Grid>
 
                                 <Grid item xs={12}>
-                                    <Button
-                                        variant="outlined"
-                                        component="label"
-                                        fullWidth
-                                        startIcon={<CloudUpload />}
-                                        sx={{ py: 1.5, borderColor: '#ccc', color: '#666', justifyContent: 'flex-start' }}
-                                    >
-                                        {fileName}
-                                        <input type="file" hidden onChange={handleFileChange} />
-                                    </Button>
-
-                                    <Typography variant="caption" color="textSecondary">
-                                        Requisition form (रक्त निवेदन फारम)
-                                    </Typography>
+                                    <FormControl fullWidth>
+                                        <InputLabel>Payment Method</InputLabel>
+                                        <Select
+                                            value={paymentMethod}
+                                            label="Payment Method"
+                                            onChange={(e) => setPaymentMethod(e.target.value)}
+                                        >
+                                            <MenuItem value="onsite">Onsite Cash Payment</MenuItem>
+                                            <MenuItem value="esewa">Pay with eSewa</MenuItem>
+                                        </Select>
+                                    </FormControl>
                                 </Grid>
+
+                                {paymentMethod === "onsite" && (
+                                    <Grid item xs={12}>
+                                        <Button
+                                            variant="outlined"
+                                            component="label"
+                                            fullWidth
+                                            startIcon={<CloudUpload />}
+                                            sx={{ py: 1.5, borderColor: '#ccc', color: '#666', justifyContent: 'flex-start' }}
+                                        >
+                                            {fileName}
+                                            <input type="file" hidden onChange={handleFileChange} required />
+                                        </Button>
+
+                                        <Typography variant="caption" color="textSecondary">
+                                            Requisition form (रक्त निवेदन फारम) - Required
+                                        </Typography>
+                                    </Grid>
+                                )}
 
                                 <Grid item xs={12}>
                                     <TextField
@@ -1233,26 +1265,29 @@ const WelcomePage = () => {
                                 </Grid>
 
                                 <Grid item xs={12}>
-                                    <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+                                    {paymentMethod === "esewa" ? (
+                                        <Button
+                                            type="button"
+                                            variant="contained"
+                                            color="error"
+                                            fullWidth
+                                            disabled={paymentLoading}
+                                            onClick={handlePayment}
+                                            sx={{ py: 1.5, fontSize: '1rem', borderRadius: 3 }}
+                                        >
+                                            {paymentLoading ? "Processing..." : "Proceed to eSewa Payment"}
+                                        </Button>
+                                    ) : (
                                         <Button
                                             type="submit"
                                             variant="contained"
                                             color="error"
-                                            sx={{ py: 1.5, fontSize: '1rem', borderRadius: 3, flex: 1 }}
+                                            fullWidth
+                                            sx={{ py: 1.5, fontSize: '1rem', borderRadius: 3 }}
                                         >
                                             Submit Request
                                         </Button>
-                                        <Button
-                                            type="button"
-                                            variant="outlined"
-                                            color="error"
-                                            disabled={paymentLoading}
-                                            onClick={handlePayment}
-                                            sx={{ py: 1.5, fontSize: '1rem', borderRadius: 3, flex: 1 }}
-                                        >
-                                            {paymentLoading ? "Processing..." : "Pay with eSewa"}
-                                        </Button>
-                                    </Box>
+                                    )}
                                 </Grid>
                             </Grid>
                         </form>
