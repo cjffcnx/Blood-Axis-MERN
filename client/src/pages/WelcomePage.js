@@ -836,7 +836,7 @@ const WelcomePage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            if (paymentMethod === "onsite" && !file) {
+            if (!file) {
                 toast.error("Please upload the requisition form");
                 return;
             }
@@ -884,15 +884,26 @@ const WelcomePage = () => {
             return;
         }
 
-        if (file) {
-            // Payment flow does not upload files; enforce requisition form upload on direct submit.
-            toast.error("Please submit the request with the requisition form (no online payment when a file is required)");
+        if (!file) {
+            toast.error("Please upload the requisition form");
             return;
         }
 
         setPaymentLoading(true);
+        let uploadedAttachmentPath = null;
 
         try {
+            const uploadData = new FormData();
+            uploadData.append("attachment", file);
+
+            const uploadRes = await API.post("/request/upload-attachment", uploadData);
+            if (!uploadRes.data?.success || !uploadRes.data?.attachmentPath) {
+                toast.error("Failed to upload requisition form");
+                return;
+            }
+
+            uploadedAttachmentPath = uploadRes.data.attachmentPath;
+
             const amount = calculateAmount();
             const transactionId = "EMERGENCY-" + Date.now();
             const productName = `Emergency Blood Request - ${formData.bloodGroup}`;
@@ -908,6 +919,7 @@ const WelcomePage = () => {
                     message: formData.message,
                     hospitalName,
                     hospitalId: selectedHospital,
+                    attachmentPath: uploadedAttachmentPath,
                 })
             );
 
@@ -934,10 +946,20 @@ const WelcomePage = () => {
                 document.body.appendChild(form);
                 form.submit();
             } else {
+                if (uploadedAttachmentPath) {
+                    await API.post("/request/cleanup-attachment", {
+                        attachmentPath: uploadedAttachmentPath,
+                    });
+                }
                 toast.error("Could not initiate eSewa payment");
             }
         } catch (error) {
             console.log("Error:", error);
+            if (uploadedAttachmentPath) {
+                await API.post("/request/cleanup-attachment", {
+                    attachmentPath: uploadedAttachmentPath,
+                });
+            }
             toast.error(error.response?.data?.message || error.response?.data?.error || "eSewa payment error");
         } finally {
             setPaymentLoading(false);
@@ -1233,24 +1255,22 @@ const WelcomePage = () => {
                                     </FormControl>
                                 </Grid>
 
-                                {paymentMethod === "onsite" && (
-                                    <Grid item xs={12}>
-                                        <Button
-                                            variant="outlined"
-                                            component="label"
-                                            fullWidth
-                                            startIcon={<CloudUpload />}
-                                            sx={{ py: 1.5, borderColor: '#ccc', color: '#666', justifyContent: 'flex-start' }}
-                                        >
-                                            {fileName}
-                                            <input type="file" hidden onChange={handleFileChange} required />
-                                        </Button>
+                                <Grid item xs={12}>
+                                    <Button
+                                        variant="outlined"
+                                        component="label"
+                                        fullWidth
+                                        startIcon={<CloudUpload />}
+                                        sx={{ py: 1.5, borderColor: '#ccc', color: '#666', justifyContent: 'flex-start' }}
+                                    >
+                                        {fileName}
+                                        <input type="file" hidden onChange={handleFileChange} required />
+                                    </Button>
 
-                                        <Typography variant="caption" color="textSecondary">
-                                            Requisition form (रक्त निवेदन फारम) - Required
-                                        </Typography>
-                                    </Grid>
-                                )}
+                                    <Typography variant="caption" color="textSecondary">
+                                        Requisition form (रक्त निवेदन फारम) - Required
+                                    </Typography>
+                                </Grid>
 
                                 <Grid item xs={12}>
                                     <TextField

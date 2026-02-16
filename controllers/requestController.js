@@ -2,6 +2,8 @@ const requestModel = require("../models/requestModel");
 const userModel = require("../models/userModel");
 const inventoryModel = require("../models/inventoryModel");
 const mongoose = require("mongoose");
+const fs = require("fs");
+const path = require("path");
 
 // CREATE REQUEST (Public)
 const createRequestController = async (req, res) => {
@@ -15,11 +17,22 @@ const createRequestController = async (req, res) => {
             });
         }
 
-        // Handle file
-        const attachment = req.file ? `/uploads/${req.file.filename}` : null;
         const normalizedPaymentStatus = paymentStatus === "paid" ? "paid" : "non-paid";
+        const bodyAttachmentPath = typeof req.body.attachmentPath === "string" ? req.body.attachmentPath : null;
+        const normalizedAttachmentPath =
+            bodyAttachmentPath && bodyAttachmentPath.startsWith("/uploads/")
+                ? bodyAttachmentPath
+                : null;
+        const attachmentFromBody = normalizedAttachmentPath
+            ? path.join(__dirname, "..", normalizedAttachmentPath.replace(/^\//, ""))
+            : null;
 
-        if (!attachment && normalizedPaymentStatus !== "paid") {
+        // Handle file
+        const attachment = req.file
+            ? `/uploads/${req.file.filename}`
+            : (attachmentFromBody && fs.existsSync(attachmentFromBody) ? normalizedAttachmentPath : null);
+
+        if (!attachment) {
             return res.status(400).send({
                 success: false,
                 message: "Requisition form is required",
@@ -51,6 +64,62 @@ const createRequestController = async (req, res) => {
         return res.status(500).send({
             success: false,
             message: "Error In Create Request API",
+            error,
+        });
+    }
+};
+
+// UPLOAD REQUISITION FORM (Public, temp)
+const uploadRequestAttachmentController = async (req, res) => {
+    try {
+        const attachment = req.file ? `/uploads/${req.file.filename}` : null;
+        if (!attachment) {
+            return res.status(400).send({
+                success: false,
+                message: "No file uploaded",
+            });
+        }
+
+        return res.status(201).send({
+            success: true,
+            message: "Requisition form uploaded",
+            attachmentPath: attachment,
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).send({
+            success: false,
+            message: "Error uploading requisition form",
+            error,
+        });
+    }
+};
+
+// CLEANUP REQUISITION FORM (Public)
+const cleanupRequestAttachmentController = async (req, res) => {
+    try {
+        const { attachmentPath } = req.body || {};
+        if (typeof attachmentPath !== "string" || !attachmentPath.startsWith("/uploads/")) {
+            return res.status(400).send({
+                success: false,
+                message: "Invalid attachment path",
+            });
+        }
+
+        const fullPath = path.join(__dirname, "..", attachmentPath.replace(/^\//, ""));
+        if (fs.existsSync(fullPath)) {
+            fs.unlinkSync(fullPath);
+        }
+
+        return res.status(200).send({
+            success: true,
+            message: "Attachment cleaned up",
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).send({
+            success: false,
+            message: "Error cleaning attachment",
             error,
         });
     }
@@ -591,6 +660,8 @@ const getOrganisationsController = async (req, res) => {
 
 module.exports = {
     createRequestController,
+    uploadRequestAttachmentController,
+    cleanupRequestAttachmentController,
     getRequestsController,
     getApprovedRequestsController,
     updateRequestStatusController,

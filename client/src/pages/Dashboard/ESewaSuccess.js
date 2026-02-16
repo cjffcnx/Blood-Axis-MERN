@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Layout from "../../components/shared/Layout/Layout";
@@ -12,6 +12,18 @@ const ESewaSuccess = () => {
     const [creatingRequest, setCreatingRequest] = useState(false);
     const [flowType, setFlowType] = useState("supply");
     const [receiptData, setReceiptData] = useState(null);
+    const hasProcessedRef = useRef(false);
+
+    const cleanupAttachment = async (payload) => {
+        if (!payload?.attachmentPath) return;
+        try {
+            await API.post("/request/cleanup-attachment", {
+                attachmentPath: payload.attachmentPath,
+            });
+        } catch (error) {
+            console.log("Cleanup error:", error);
+        }
+    };
 
     // eSewa can return either a txnId/transaction_uuid query param or a base64-encoded `data` blob.
     const extractTransactionId = () => {
@@ -33,9 +45,30 @@ const ESewaSuccess = () => {
     };
 
     useEffect(() => {
+        if (hasProcessedRef.current) {
+            return;
+        }
+        hasProcessedRef.current = true;
+
         const verifyPayment = async () => {
             const txnId = extractTransactionId();
+            const emergencyPayloadRaw = sessionStorage.getItem("pendingEmergencyRequestPayload");
+            const supplyPayloadRaw = sessionStorage.getItem("pendingRequestPayload");
+            let emergencyPayload = null;
+
+            if (emergencyPayloadRaw) {
+                try {
+                    emergencyPayload = JSON.parse(emergencyPayloadRaw);
+                } catch (err) {
+                    emergencyPayload = null;
+                }
+            }
+
             if (!txnId) {
+                await cleanupAttachment(emergencyPayload);
+                if (emergencyPayloadRaw) {
+                    sessionStorage.removeItem("pendingEmergencyRequestPayload");
+                }
                 setStatus("failed");
                 setMessage("No transaction ID found in URL");
                 return;
@@ -51,13 +84,10 @@ const ESewaSuccess = () => {
                     setStatus("success");
                     setMessage("Payment verified. Blood request will be created.");
 
-                    const emergencyPayloadRaw = sessionStorage.getItem("pendingEmergencyRequestPayload");
-                    const supplyPayloadRaw = sessionStorage.getItem("pendingRequestPayload");
-
                     if (emergencyPayloadRaw) {
                         setFlowType("emergency");
                         try {
-                            const parsedPayload = JSON.parse(emergencyPayloadRaw);
+                            const parsedPayload = emergencyPayload || JSON.parse(emergencyPayloadRaw);
                             setCreatingRequest(true);
                             const createRes = await API.post("/request/create-request", {
                                 ...parsedPayload,
@@ -122,11 +152,19 @@ const ESewaSuccess = () => {
 
                     setMessage("Payment verified. Please resubmit request if it does not appear.");
                 } else {
+                    await cleanupAttachment(emergencyPayload);
+                    if (emergencyPayloadRaw) {
+                        sessionStorage.removeItem("pendingEmergencyRequestPayload");
+                    }
                     setStatus("failed");
                     setMessage(response.data?.message || "Payment verification failed");
                 }
             } catch (error) {
                 console.log("Verification error:", error.response?.data || error.message);
+                await cleanupAttachment(emergencyPayload);
+                if (emergencyPayloadRaw) {
+                    sessionStorage.removeItem("pendingEmergencyRequestPayload");
+                }
                 setStatus("failed");
                 setMessage(error.response?.data?.message || "Error verifying payment");
             }

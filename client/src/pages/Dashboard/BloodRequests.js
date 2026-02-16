@@ -89,6 +89,7 @@ const BloodRequests = () => {
                             <th scope="col">Date</th>
                             <th scope="col">Status</th>
                             <th scope="col">Paid</th>
+                            <th scope="col">Document</th>
                             {(user?.role === "hospital" || user?.role === "organisation") && (
                                 <th scope="col">Action</th>
                             )}
@@ -111,6 +112,18 @@ const BloodRequests = () => {
                                     <span className={`badge ${record.paymentStatus === "paid" ? "bg-success" : "bg-secondary"}`}>
                                         {record.paymentStatus || "non-paid"}
                                     </span>
+                                </td>
+                                <td>
+                                    {record.attachment ? (
+                                        <a
+                                            href={`http://localhost:5000${record.attachment}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="btn btn-sm btn-info text-white"
+                                        >
+                                            View Doc
+                                        </a>
+                                    ) : "N/A"}
                                 </td>
                                 {user?.role === "organisation" && (
                                     <td>
@@ -142,7 +155,7 @@ const BloodRequests = () => {
                         ))}
                         {data?.length === 0 && (
                             <tr>
-                                <td colSpan={user?.role === "hospital" || user?.role === "organisation" ? 8 : 7} className="text-center">No active requests found.</td>
+                                <td colSpan={user?.role === "hospital" || user?.role === "organisation" ? 9 : 8} className="text-center">No active requests found.</td>
                             </tr>
                         )}
                     </tbody>

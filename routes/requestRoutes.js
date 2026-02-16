@@ -1,6 +1,8 @@
 const express = require("express");
 const {
     createRequestController,
+    uploadRequestAttachmentController,
+    cleanupRequestAttachmentController,
     getRequestsController,
     getApprovedRequestsController,
     updateRequestStatusController,
@@ -37,6 +39,12 @@ const upload = multer({ storage: storage });
 
 //CREATE REQUEST || POST (Public)
 router.post("/create-request", upload.single("attachment"), createRequestController);
+
+//UPLOAD REQUISITION FORM (Public)
+router.post("/upload-attachment", upload.single("attachment"), uploadRequestAttachmentController);
+
+//CLEANUP REQUISITION FORM (Public)
+router.post("/cleanup-attachment", cleanupRequestAttachmentController);
 
 //GET ALL REQUESTS || GET (Admin Only)
 router.get("/get-requests", authMiddleware, adminMiddleware, getRequestsController);
