@@ -29,10 +29,11 @@ import {
     Bloodtype,
     SmartToy
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import API from '../services/API';
 import axios from "axios";
 import { toast } from 'react-toastify';
+import Footer from '../components/shared/Footer/Footer';
 
 const WelcomePage = () => {
     const navigate = useNavigate();
@@ -974,13 +975,21 @@ const WelcomePage = () => {
     return (
         <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh' }}>
             {/* Header */}
-            <AppBar position="static" color="transparent" elevation={0} sx={{ py: 1, backgroundColor: 'white' }}>
+            <AppBar position="fixed" color="transparent" elevation={0} sx={{ py: 1, backgroundColor: 'white' }}>
                 <Toolbar>
                     <Typography variant="h5" sx={{ flexGrow: 1, color: '#d32f2f', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1 }}>
                         <WaterDrop /> Blood Bank Nepal
                     </Typography>
 
-                    <Link href="/request-account" underline="none" sx={{ mx: 2, fontWeight: 'medium', color: 'text.primary', '&:hover': { color: 'error.main' } }}>
+                    <Link component={RouterLink} to="/faq" underline="none" sx={{ mx: 2, fontWeight: 'medium', color: 'text.primary', '&:hover': { color: 'error.main' } }}>
+                        FAQ
+                    </Link>
+
+                    <Link component={RouterLink} to="/contact" underline="none" sx={{ mx: 2, fontWeight: 'medium', color: 'text.primary', '&:hover': { color: 'error.main' } }}>
+                        Contact Us
+                    </Link>
+
+                    <Link component={RouterLink} to="/request-account" underline="none" sx={{ mx: 2, fontWeight: 'medium', color: 'text.primary', '&:hover': { color: 'error.main' } }}>
                         Register Org/Hospital
                     </Link>
 
@@ -989,6 +998,8 @@ const WelcomePage = () => {
                     </Button>
                 </Toolbar>
             </AppBar>
+
+            <Toolbar />
 
             {/* Hero */}
             <Box sx={{
@@ -1388,6 +1399,8 @@ const WelcomePage = () => {
                     <SmartToy />
                 </Button>
             </Box>
+
+            <Footer />
         </Box>
     );
 };

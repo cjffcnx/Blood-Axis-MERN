@@ -11,6 +11,8 @@ const HomePage = () => {
   const { loading, error, user } = useSelector((state) => state.auth);
   const [data, setData] = useState([]);
   const [analyticsData, setAnalyticsData] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredData, setFilteredData] = useState([]);
   const navigate = useNavigate();
 
   const getBloodRecords = async () => {
@@ -18,6 +20,7 @@ const HomePage = () => {
       const { data } = await API.get("/inventory/get-inventory");
       if (data?.success) {
         setData(data?.inventory);
+        setFilteredData(data?.inventory);
       }
     } catch (error) {
       console.log(error);
@@ -39,6 +42,24 @@ const HomePage = () => {
     getBloodRecords();
     getAnalytics();
   }, []);
+
+  // Filter data based on search term
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
+      setFilteredData(data);
+    } else {
+      const filtered = data.filter((record) => {
+        const searchLower = searchTerm.toLowerCase();
+        return (
+          record.bloodGroup?.toLowerCase().includes(searchLower) ||
+          record.inventoryType?.toLowerCase().includes(searchLower) ||
+          record.email?.toLowerCase().includes(searchLower) ||
+          record.quantity?.toString().includes(searchTerm)
+        );
+      });
+      setFilteredData(filtered);
+    }
+  }, [searchTerm, data]);
 
   return (
     <Layout>
@@ -95,14 +116,37 @@ const HomePage = () => {
 
             <div className="d-flex justify-content-between align-items-center mb-3">
               <h4 className="my-0">Recent Inventory</h4>
-              <h4
-                className="btn btn-outline-success"
-                data-bs-toggle="modal"
-                data-bs-target="#staticBackdrop"
-              >
-                <i className="fa-solid fa-plus me-2"></i>
-                Add Inventory
-              </h4>
+              <div className="d-flex gap-2 align-items-center">
+                <div className="input-group" style={{ width: "300px" }}>
+                  <span className="input-group-text bg-white">
+                    <i className="fa-solid fa-search"></i>
+                  </span>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Search by blood group, type, email..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                  {searchTerm && (
+                    <button
+                      className="btn btn-outline-secondary"
+                      type="button"
+                      onClick={() => setSearchTerm("")}
+                    >
+                      <i className="fa-solid fa-times"></i>
+                    </button>
+                  )}
+                </div>
+                <button
+                  className="btn btn-outline-success"
+                  data-bs-toggle="modal"
+                  data-bs-target="#staticBackdrop"
+                >
+                  <i className="fa-solid fa-plus me-2"></i>
+                  Add Inventory
+                </button>
+              </div>
             </div>
 
             <table className="table table-striped shadow-sm">
@@ -116,17 +160,35 @@ const HomePage = () => {
                 </tr>
               </thead>
               <tbody>
-                {data?.map((record) => (
-                  <tr key={record._id}>
-                    <td><span className="badge bg-secondary">{record.bloodGroup}</span></td>
-                    <td><span className={`badge ${record.inventoryType === 'in' ? 'bg-success' : 'bg-danger'}`}>{record.inventoryType}</span></td>
-                    <td>{record.quantity} ML</td>
-                    <td>{record.email}</td>
-                    <td>
-                      {moment(record.createdAt).format("DD/MM/YYYY hh:mm A")}
+                {filteredData?.length > 0 ? (
+                  filteredData.map((record) => (
+                    <tr key={record._id}>
+                      <td><span className="badge bg-secondary">{record.bloodGroup}</span></td>
+                      <td><span className={`badge ${record.inventoryType === 'in' ? 'bg-success' : 'bg-danger'}`}>{record.inventoryType}</span></td>
+                      <td>{record.quantity} ML</td>
+                      <td>{record.email}</td>
+                      <td>
+                        {moment(record.createdAt).format("DD/MM/YYYY hh:mm A")}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="text-center text-muted py-4">
+                      {searchTerm ? (
+                        <>
+                          <i className="fa-solid fa-search me-2"></i>
+                          No results found for "{searchTerm}"
+                        </>
+                      ) : (
+                        <>
+                          <i className="fa-solid fa-inbox me-2"></i>
+                          No inventory records available
+                        </>
+                      )}
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
 

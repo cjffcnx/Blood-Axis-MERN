@@ -128,11 +128,30 @@ const cleanupRequestAttachmentController = async (req, res) => {
 // GET ALL PUBLIC REQUESTS (Admin)
 const getRequestsController = async (req, res) => {
     try {
-        const requests = await requestModel
-            .find({
-                $or: [{ hospital: { $exists: false } }, { hospital: null }],
-            })
-            .sort({ createdAt: -1 });
+        const search = (req.query.search || "").trim();
+        const baseFilter = {
+            $or: [{ hospital: { $exists: false } }, { hospital: null }],
+        };
+        const filter = search
+            ? {
+                $and: [
+                    baseFilter,
+                    {
+                        $or: [
+                            { name: { $regex: search, $options: "i" } },
+                            { email: { $regex: search, $options: "i" } },
+                            { phone: { $regex: search, $options: "i" } },
+                            { bloodGroup: { $regex: search, $options: "i" } },
+                            { hospitalName: { $regex: search, $options: "i" } },
+                            { status: { $regex: search, $options: "i" } },
+                            { message: { $regex: search, $options: "i" } },
+                        ],
+                    },
+                ],
+            }
+            : baseFilter;
+
+        const requests = await requestModel.find(filter).sort({ createdAt: -1 });
         return res.status(200).send({
             success: true,
             message: "All Blood Requests Fetched Successfully",

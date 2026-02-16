@@ -1,0 +1,157 @@
+.faq-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 2rem 0;
+}
+
+.faq-header {
+    padding: 2rem 0;
+}
+
+.faq-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 1rem;
+}
+
+.faq-subtitle {
+    font-size: 1.1rem;
+    color: #6c757d;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.faq-category {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.category-title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: #dc3545;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 3px solid #dc3545;
+}
+
+.accordion-item {
+    border: 1px solid #e9ecef;
+    border-radius: 10px !important;
+    margin-bottom: 1rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.accordion-item:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.accordion-button {
+    background-color: #f8f9fa;
+    color: #2c3e50;
+    font-weight: 600;
+    font-size: 1.05rem;
+    padding: 1.25rem 1.5rem;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: #dc3545;
+    color: white;
+    box-shadow: none;
+}
+
+.accordion-button:focus {
+    box-shadow: none;
+    border: none;
+}
+
+.accordion-button:hover {
+    background-color: #e9ecef;
+}
+
+.accordion-button:not(.collapsed):hover {
+    background-color: #c82333;
+}
+
+.accordion-button i {
+    transition: transform 0.3s ease;
+}
+
+.accordion-body {
+    padding: 1.5rem;
+    background-color: white;
+    color: #495057;
+    line-height: 1.8;
+    font-size: 1rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.still-questions {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    border-radius: 15px;
+    color: white;
+    box-shadow: 0 10px 30px rgba(220, 53, 69, 0.3);
+}
+
+.still-questions h3 {
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.still-questions p {
+    font-size: 1.1rem;
+    opacity: 0.95;
+}
+
+.still-questions .btn {
+    background-color: white;
+    color: #dc3545;
+    border: none;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.still-questions .btn:hover {
+    background-color: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 768px) {
+    .faq-title {
+        font-size: 2rem;
+    }
+
+    .faq-subtitle {
+        font-size: 1rem;
+    }
+
+    .category-title {
+        font-size: 1.5rem;
+    }
+
+    .accordion-button {
+        font-size: 0.95rem;
+        padding: 1rem;
+    }
+
+    .accordion-body {
+        font-size: 0.95rem;
+        padding: 1rem;
+    }
+
+    .still-questions {
+        padding: 2rem 1rem !important;
+    }
+
+    .still-questions h3 {
+        font-size: 1.5rem;
+    }
+}

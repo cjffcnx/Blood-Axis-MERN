@@ -29,6 +29,8 @@ import WelcomePage from "./pages/WelcomePage";
 import BloodRequests from "./pages/Dashboard/BloodRequests";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
+import FAQ from "./pages/FAQ";
+import ContactUs from "./pages/ContactUs";
 
 // Refactored Dashboard
 import DonorDashboard from "./pages/Dashboard/DonorDashboard";
@@ -62,6 +64,22 @@ function App() {
             element={
               <PublicRoute>
                 <WelcomePage />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/faq"
+            element={
+              <PublicRoute>
+                <FAQ />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/contact"
+            element={
+              <PublicRoute>
+                <ContactUs />
               </PublicRoute>
             }
           />

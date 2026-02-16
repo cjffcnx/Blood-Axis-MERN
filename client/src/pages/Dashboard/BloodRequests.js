@@ -9,6 +9,8 @@ import { toast } from "react-toastify";
 const BloodRequests = () => {
     const { user } = useSelector((state) => state.auth);
     const [data, setData] = useState([]);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [filteredData, setFilteredData] = useState([]);
 
     //get requests based on role
     const getRequests = async () => {
@@ -17,12 +19,14 @@ const BloodRequests = () => {
                 const { data } = await API.get("/request/hospital-requests");
                 if (data?.success) {
                     setData(data?.requests);
+                    setFilteredData(data?.requests);
                 }
             } else {
                 // Default logic for others
                 const { data } = await API.get("/request/get-approved-requests");
                 if (data?.success) {
                     setData(data?.requests);
+                    setFilteredData(data?.requests);
                 }
             }
         } catch (error) {
@@ -33,6 +37,29 @@ const BloodRequests = () => {
     useEffect(() => {
         getRequests();
     }, [user]);
+
+    // Filter data based on search term
+    useEffect(() => {
+        if (searchTerm.trim() === "") {
+            setFilteredData(data);
+        } else {
+            const filtered = data.filter((record) => {
+                const searchLower = searchTerm.toLowerCase();
+                const hospitalName = record.hospital?.hospitalName?.toLowerCase() || record.name?.toLowerCase() || "";
+                const phone = record.hospital?.phone || record.phone || "";
+
+                return (
+                    hospitalName.includes(searchLower) ||
+                    record.bloodGroup?.toLowerCase().includes(searchLower) ||
+                    phone.includes(searchTerm) ||
+                    record.status?.toLowerCase().includes(searchLower) ||
+                    record.paymentStatus?.toLowerCase().includes(searchLower) ||
+                    record.quantity?.toString().includes(searchTerm)
+                );
+            });
+            setFilteredData(filtered);
+        }
+    }, [searchTerm, data]);
 
     const handleFulfill = async (id) => {
         try {
@@ -79,6 +106,33 @@ const BloodRequests = () => {
                 <h2 className="text-center mb-4">
                     {user?.role === "organisation" ? "Hospital Supply Requests" : "Blood Requests"}
                 </h2>
+
+                {/* Search Bar */}
+                <div className="mb-4">
+                    <div className="input-group">
+                        <span className="input-group-text bg-white">
+                            <i className="fa-solid fa-search"></i>
+                        </span>
+                        <input
+                            type="text"
+                            className="form-control"
+                            placeholder="Search by hospital, blood group, phone, status..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                        {searchTerm && (
+                            <button
+                                className="btn btn-outline-secondary"
+                                type="button"
+                                onClick={() => setSearchTerm("")}
+                                title="Clear search"
+                            >
+                                <i className="fa-solid fa-times"></i>
+                            </button>
+                        )}
+                    </div>
+                </div>
+
                 <table className="table">
                     <thead>
                         <tr>
@@ -96,66 +150,79 @@ const BloodRequests = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {data?.map((record) => (
-                            <tr key={record._id}>
-                                <td>
-                                    {record.hospital ? record.hospital.hospitalName : record.name}
-                                </td>
-                                <td>{record.bloodGroup}</td>
-                                <td>{record.quantity ? `${record.quantity} ML` : 'N/A'}</td>
-                                <td>{record.hospital ? record.hospital.phone : record.phone}</td>
-                                <td>{moment(record.createdAt).format("DD/MM/YYYY hh:mm A")}</td>
-                                <td>
-                                    <span className="badge bg-warning text-dark">{record.status}</span>
-                                </td>
-                                <td>
-                                    <span className={`badge ${record.paymentStatus === "paid" ? "bg-success" : "bg-secondary"}`}>
-                                        {record.paymentStatus || "non-paid"}
-                                    </span>
-                                </td>
-                                <td>
-                                    {record.attachment ? (
-                                        <a
-                                            href={`http://localhost:5000${record.attachment}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="btn btn-sm btn-info text-white"
-                                        >
-                                            View Doc
-                                        </a>
-                                    ) : "N/A"}
-                                </td>
-                                {user?.role === "organisation" && (
+                        {filteredData?.length > 0 ? (
+                            filteredData.map((record) => (
+                                <tr key={record._id}>
                                     <td>
-                                        <button
-                                            className="btn btn-success btn-sm"
-                                            onClick={() => handleFulfill(record._id)}
-                                        >
-                                            Send Blood
-                                        </button>
+                                        {record.hospital ? record.hospital.hospitalName : record.name}
                                     </td>
-                                )}
-                                {user?.role === "hospital" && (
+                                    <td>{record.bloodGroup}</td>
+                                    <td>{record.quantity ? `${record.quantity} ML` : 'N/A'}</td>
+                                    <td>{record.hospital ? record.hospital.phone : record.phone}</td>
+                                    <td>{moment(record.createdAt).format("DD/MM/YYYY hh:mm A")}</td>
                                     <td>
-                                        {record.hospital ? (
-                                            <span className="text-muted">N/A</span>
-                                        ) : (
-                                            record.paymentStatus !== "paid" && (
-                                                <button
-                                                    className="btn btn-outline-success btn-sm"
-                                                    onClick={() => handleMarkPaid(record._id)}
-                                                >
-                                                    Mark Paid
-                                                </button>
-                                            )
-                                        )}
+                                        <span className="badge bg-warning text-dark">{record.status}</span>
                                     </td>
-                                )}
-                            </tr>
-                        ))}
-                        {data?.length === 0 && (
+                                    <td>
+                                        <span className={`badge ${record.paymentStatus === "paid" ? "bg-success" : "bg-secondary"}`}>
+                                            {record.paymentStatus || "non-paid"}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {record.attachment ? (
+                                            <a
+                                                href={`http://localhost:5000${record.attachment}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="btn btn-sm btn-info text-white"
+                                            >
+                                                View Doc
+                                            </a>
+                                        ) : "N/A"}
+                                    </td>
+                                    {user?.role === "organisation" && (
+                                        <td>
+                                            <button
+                                                className="btn btn-success btn-sm"
+                                                onClick={() => handleFulfill(record._id)}
+                                            >
+                                                Send Blood
+                                            </button>
+                                        </td>
+                                    )}
+                                    {user?.role === "hospital" && (
+                                        <td>
+                                            {record.hospital ? (
+                                                <span className="text-muted">N/A</span>
+                                            ) : (
+                                                record.paymentStatus !== "paid" && (
+                                                    <button
+                                                        className="btn btn-outline-success btn-sm"
+                                                        onClick={() => handleMarkPaid(record._id)}
+                                                    >
+                                                        Mark Paid
+                                                    </button>
+                                                )
+                                            )}
+                                        </td>
+                                    )}
+                                </tr>
+                            ))
+                        ) : (
                             <tr>
-                                <td colSpan={user?.role === "hospital" || user?.role === "organisation" ? 9 : 8} className="text-center">No active requests found.</td>
+                                <td colSpan={user?.role === "hospital" || user?.role === "organisation" ? 9 : 8} className="text-center text-muted py-4">
+                                    {searchTerm ? (
+                                        <>
+                                            <i className="fa-solid fa-search me-2"></i>
+                                            No results found for "{searchTerm}"
+                                        </>
+                                    ) : (
+                                        <>
+                                            <i className="fa-solid fa-inbox me-2"></i>
+                                            No active requests found
+                                        </>
+                                    )}
+                                </td>
                             </tr>
                         )}
                     </tbody>
