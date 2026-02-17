@@ -17,6 +17,8 @@ const OrgHospitalRequest = () => {
     const [website, setWebsite] = useState("");
     const [organisationName, setOrganisationName] = useState("");
     const [hospitalName, setHospitalName] = useState("");
+    const [latitude, setLatitude] = useState("");
+    const [longitude, setLongitude] = useState("");
     const [proofFile, setProofFile] = useState(null);
     const [loading, setLoading] = useState(false);
     const [emailError, setEmailError] = useState("");
@@ -75,6 +77,17 @@ const OrgHospitalRequest = () => {
                 return;
             }
 
+            const parsedLatitude = Number(latitude);
+            const parsedLongitude = Number(longitude);
+            if (!Number.isFinite(parsedLatitude) || parsedLatitude < -90 || parsedLatitude > 90) {
+                toast.error("Latitude must be between -90 and 90");
+                return;
+            }
+            if (!Number.isFinite(parsedLongitude) || parsedLongitude < -180 || parsedLongitude > 180) {
+                toast.error("Longitude must be between -180 and 180");
+                return;
+            }
+
             if (!proofFile) {
                 return toast.error("Please upload a proof document");
             }
@@ -88,6 +101,8 @@ const OrgHospitalRequest = () => {
             formData.append("address", address);
             formData.append("website", website);
             formData.append("proofFile", proofFile);
+            formData.append("latitude", parsedLatitude);
+            formData.append("longitude", parsedLongitude);
 
             if (role === "organisation") {
                 formData.append("organisationName", organisationName);
@@ -233,6 +248,36 @@ const OrgHospitalRequest = () => {
                                         />
                                     </div>
                                 )}
+
+                                <div className="mb-3">
+                                    <label className="form-label">
+                                        Latitude
+                                        <span style={{ color: 'red', marginLeft: '4px' }}>*</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="any"
+                                        className="form-control"
+                                        value={latitude}
+                                        onChange={(e) => setLatitude(e.target.value)}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="mb-3">
+                                    <label className="form-label">
+                                        Longitude
+                                        <span style={{ color: 'red', marginLeft: '4px' }}>*</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="any"
+                                        className="form-control"
+                                        value={longitude}
+                                        onChange={(e) => setLongitude(e.target.value)}
+                                        required
+                                    />
+                                </div>
 
                                 <div className="mb-3">
                                     <label className="form-label">

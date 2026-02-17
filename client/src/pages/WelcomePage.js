@@ -59,6 +59,19 @@ const WelcomePage = () => {
     const [chatOpen, setChatOpen] = useState(false);
     const [paymentLoading, setPaymentLoading] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState("onsite");
+    const [stockCheck, setStockCheck] = useState({
+        status: "idle",
+        hasStock: null,
+        availableUnits: 0,
+        alternatives: [],
+        hospitalId: "",
+        bloodGroup: "",
+        quantity: "",
+    });
+    const [selectedAlternative, setSelectedAlternative] = useState("");
+    const [stockMessage, setStockMessage] = useState("");
+    const [userLocation, setUserLocation] = useState(null);
+    const [locationStatus, setLocationStatus] = useState("idle");
 
     const BLOOD_RATE = 400;
 
@@ -859,6 +872,272 @@ const WelcomePage = () => {
         return match?.hospitalName || match?.name || "";
     };
 
+    const normalizeName = (value) => {
+        if (!value) return "";
+        return value
+            .toLowerCase()
+            .replace(/blood bank|hospital|unit/g, "")
+            .replace(/\s+/g, " ")
+            .trim();
+    };
+
+    const normalizeLocation = (value) => {
+        if (!value) return "";
+        return value
+            .toLowerCase()
+            .replace(/[^a-z0-9\s]/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+    };
+
+    const cityCentroids = (() => {
+        const totals = {};
+        bloodBanks.forEach((bank) => {
+            const location = normalizeLocation(bank.location);
+            ["kathmandu", "lalitpur", "bhaktapur"].forEach((city) => {
+                if (location.includes(city)) {
+                    if (!totals[city]) {
+                        totals[city] = { lat: 0, lng: 0, count: 0 };
+                    }
+                    totals[city].lat += bank.lat;
+                    totals[city].lng += bank.lng;
+                    totals[city].count += 1;
+                }
+            });
+        });
+
+        const centroids = {};
+        Object.keys(totals).forEach((city) => {
+            const total = totals[city];
+            if (total.count > 0) {
+                centroids[city] = {
+                    lat: total.lat / total.count,
+                    lng: total.lng / total.count,
+                };
+            }
+        });
+
+        return centroids;
+    })();
+
+    const findBankCoordinates = (name, address) => {
+        const normalized = normalizeName(name);
+        if (normalized) {
+            const directMatch = bloodBanks.find((bank) => {
+                const bankName = normalizeName(bank.name);
+                return bankName.includes(normalized) || normalized.includes(bankName);
+            });
+            if (directMatch) return directMatch;
+        }
+
+        const locationText = normalizeLocation(`${name || ""} ${address || ""}`);
+        if (locationText) {
+            let bestMatch = null;
+            let bestLength = 0;
+            bloodBanks.forEach((bank) => {
+                const bankLocation = normalizeLocation(bank.location);
+                if (bankLocation && locationText.includes(bankLocation) && bankLocation.length > bestLength) {
+                    bestMatch = bank;
+                    bestLength = bankLocation.length;
+                }
+            });
+            if (bestMatch) return bestMatch;
+        }
+
+        if (locationText.includes("kathmandu") && cityCentroids.kathmandu) {
+            return cityCentroids.kathmandu;
+        }
+        if (locationText.includes("lalitpur") && cityCentroids.lalitpur) {
+            return cityCentroids.lalitpur;
+        }
+        if (locationText.includes("bhaktapur") && cityCentroids.bhaktapur) {
+            return cityCentroids.bhaktapur;
+        }
+
+        return null;
+    };
+
+    const haversineDistanceKm = (lat1, lng1, lat2, lng2) => {
+        const toRadians = (value) => (value * Math.PI) / 180;
+        const earthRadiusKm = 6371;
+        const dLat = toRadians(lat2 - lat1);
+        const dLng = toRadians(lng2 - lng1);
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(toRadians(lat1)) *
+            Math.cos(toRadians(lat2)) *
+            Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return earthRadiusKm * c;
+    };
+
+    const requestUserLocation = () => {
+        if (userLocation || locationStatus === "loading") return;
+        if (!navigator.geolocation) {
+            setLocationStatus("unavailable");
+            return;
+        }
+
+        setLocationStatus("loading");
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                setUserLocation({
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude,
+                });
+                setLocationStatus("ready");
+            },
+            () => {
+                setLocationStatus("denied");
+            }
+        );
+    };
+
+    const enrichAlternatives = (alternatives, location) => {
+        if (!location) return alternatives;
+        const enriched = alternatives.map((alternative) => {
+            if (
+                typeof alternative.latitude === "number" &&
+                typeof alternative.longitude === "number"
+            ) {
+                const distanceKm = haversineDistanceKm(
+                    location.lat,
+                    location.lng,
+                    alternative.latitude,
+                    alternative.longitude
+                );
+                return { ...alternative, distanceKm };
+            }
+
+            const bank = findBankCoordinates(alternative.name, alternative.address);
+            if (!bank) {
+                return { ...alternative, distanceKm: null };
+            }
+
+            const distanceKm = haversineDistanceKm(
+                location.lat,
+                location.lng,
+                bank.lat,
+                bank.lng
+            );
+            return { ...alternative, distanceKm };
+        });
+
+        return enriched.sort((a, b) => {
+            const aDistance = a.distanceKm;
+            const bDistance = b.distanceKm;
+            if (aDistance !== null && bDistance !== null) {
+                return aDistance - bDistance;
+            }
+            if (aDistance !== null) return -1;
+            if (bDistance !== null) return 1;
+            return b.availableUnits - a.availableUnits;
+        });
+    };
+
+    const validateStock = async (hospitalId, bloodGroup, quantity) => {
+        setStockCheck((prev) => ({
+            ...prev,
+            status: "checking",
+        }));
+        requestUserLocation();
+
+        try {
+            const { data } = await API.post("/blood-request/validate", {
+                hospitalId,
+                bloodGroup,
+                quantity,
+            });
+
+            const alternatives = enrichAlternatives(data?.alternatives || [], userLocation);
+            const next = {
+                status: "ready",
+                hasStock: Boolean(data?.hasStock),
+                availableUnits: data?.availableUnits || 0,
+                alternatives,
+                hospitalId,
+                bloodGroup,
+                quantity,
+            };
+
+            setStockCheck(next);
+            if (next.hasStock) {
+                setSelectedAlternative("");
+                setStockMessage(`Stock available (${next.availableUnits} unit${next.availableUnits === 1 ? "" : "s"})`);
+            } else {
+                setStockMessage("Selected hospital does not have enough stock for this blood type.");
+                if (selectedAlternative) {
+                    const alternativeIds = new Set(alternatives.map((alternative) => alternative.id));
+                    if (!alternativeIds.has(selectedAlternative)) {
+                        setSelectedAlternative("");
+                    }
+                }
+            }
+
+            return next;
+        } catch (error) {
+            console.log(error);
+            setStockCheck({
+                status: "error",
+                hasStock: null,
+                availableUnits: 0,
+                alternatives: [],
+                hospitalId,
+                bloodGroup,
+                quantity,
+            });
+            setStockMessage("Unable to validate stock right now.");
+            return null;
+        }
+    };
+
+    useEffect(() => {
+        if (!selectedHospital || !formData.bloodGroup) {
+            setStockCheck({
+                status: "idle",
+                hasStock: null,
+                availableUnits: 0,
+                alternatives: [],
+                hospitalId: "",
+                bloodGroup: "",
+                quantity: "",
+            });
+            setSelectedAlternative("");
+            setStockMessage("");
+            return;
+        }
+
+        validateStock(selectedHospital, formData.bloodGroup, formData.quantity);
+    }, [selectedHospital, formData.bloodGroup, formData.quantity]);
+
+    useEffect(() => {
+        if (!userLocation || stockCheck.status !== "ready" || stockCheck.alternatives.length === 0) {
+            return;
+        }
+
+        setStockCheck((prev) => ({
+            ...prev,
+            alternatives: enrichAlternatives(prev.alternatives, userLocation),
+        }));
+    }, [userLocation]);
+
+    const resolveSelectedProvider = (alternatives) => {
+        const selected = alternatives.find((alternative) => alternative.id === selectedAlternative);
+        if (selected) {
+            return {
+                hospitalId: selected.role === "hospital" ? selected.id : null,
+                organisationId: selected.role === "organisation" ? selected.id : null,
+                name: selected.name,
+            };
+        }
+
+        return {
+            hospitalId: selectedHospital,
+            organisationId: null,
+            name: resolveHospitalName(),
+        };
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -883,6 +1162,17 @@ const WelcomePage = () => {
                 return;
             }
 
+            const stockResult = await validateStock(selectedHospital, formData.bloodGroup, formData.quantity);
+            if (!stockResult) {
+                toast.error("Unable to validate stock. Please try again.");
+                return;
+            }
+            const alternatives = stockResult.alternatives || stockCheck.alternatives;
+            if (stockResult.hasStock === false && !selectedAlternative) {
+                toast.error("Selected hospital has no stock. Please choose an organization with stock.");
+                return;
+            }
+
             if (!file) {
                 toast.error("Please upload the requisition form");
                 return;
@@ -893,10 +1183,11 @@ const WelcomePage = () => {
             data.append('phone', formData.phone);
             data.append('bloodGroup', formData.bloodGroup);
             if (formData.quantity) data.append('quantity', formData.quantity);
-            const hospitalName = resolveHospitalName();
-            if (hospitalName) data.append('hospitalName', hospitalName);
+            const provider = resolveSelectedProvider(alternatives);
+            if (provider.name) data.append('hospitalName', provider.name);
             data.append('message', formData.message);
-            if (selectedHospital) data.append('hospitalId', selectedHospital);
+            if (provider.hospitalId) data.append('hospitalId', provider.hospitalId);
+            if (provider.organisationId) data.append('organisationId', provider.organisationId);
             if (file) data.append('attachment', file);
             data.append('paymentStatus', 'non-paid');
 
@@ -948,6 +1239,17 @@ const WelcomePage = () => {
             return;
         }
 
+        const stockResult = await validateStock(selectedHospital, formData.bloodGroup, formData.quantity);
+        if (!stockResult) {
+            toast.error("Unable to validate stock. Please try again.");
+            return;
+        }
+        const alternatives = stockResult.alternatives || stockCheck.alternatives;
+        if (stockResult.hasStock === false && !selectedAlternative) {
+            toast.error("Selected hospital has no stock. Please choose an organization with stock.");
+            return;
+        }
+
         if (!formData.quantity || Number(formData.quantity) <= 0) {
             toast.error("Please enter a valid quantity for payment");
             return;
@@ -976,7 +1278,8 @@ const WelcomePage = () => {
             const amount = calculateAmount();
             const transactionId = "EMERGENCY-" + Date.now();
             const productName = `Emergency Blood Request - ${formData.bloodGroup}`;
-            const hospitalName = resolveHospitalName();
+            const provider = resolveSelectedProvider(alternatives);
+            const hospitalName = provider.name;
 
             sessionStorage.setItem(
                 "pendingEmergencyRequestPayload",
@@ -988,7 +1291,8 @@ const WelcomePage = () => {
                     quantity: formData.quantity,
                     message: formData.message,
                     hospitalName,
-                    hospitalId: selectedHospital,
+                    hospitalId: provider.hospitalId,
+                    organisationId: provider.organisationId,
                     attachmentPath: uploadedAttachmentPath,
                 })
             );
@@ -1040,6 +1344,13 @@ const WelcomePage = () => {
         const element = document.getElementById(id);
         if (element) element.scrollIntoView({ behavior: "smooth" });
     };
+
+    const requiresAlternative = stockCheck.status === "ready" && stockCheck.hasStock === false;
+    const disablePaymentButton =
+        paymentLoading ||
+        stockCheck.status === "checking" ||
+        (requiresAlternative && !selectedAlternative);
+    const disableSubmitButton = stockCheck.status === "checking" || (requiresAlternative && !selectedAlternative);
 
     return (
         <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh' }}>
@@ -1327,10 +1638,10 @@ const WelcomePage = () => {
 
                                 <Grid item xs={12} sm={6}>
                                     <FormControl fullWidth required error={Boolean(hospitalError)}>
-                                        <InputLabel>Hospital (optional)</InputLabel>
+                                        <InputLabel>Hospital</InputLabel>
                                         <Select
                                             value={selectedHospital}
-                                            label="Hospital (optional)"
+                                            label="Hospital"
                                             onChange={(e) => {
                                                 setSelectedHospital(e.target.value);
                                                 if (e.target.value) {
@@ -1352,6 +1663,60 @@ const WelcomePage = () => {
                                         )}
                                     </FormControl>
                                 </Grid>
+
+                                {selectedHospital && formData.bloodGroup && (
+                                    <Grid item xs={12} sm={6}>
+                                        <Box sx={{ p: 1.5, borderRadius: 1, bgcolor: '#f9f9f9', height: '100%' }}>
+                                            <Typography
+                                                variant="body2"
+                                                sx={{
+                                                    fontWeight: 600,
+                                                    color: stockCheck.hasStock === false || stockCheck.status === "error"
+                                                        ? 'error.main'
+                                                        : 'success.main',
+                                                }}
+                                            >
+                                                {stockCheck.status === "checking" ? "Checking stock..." : stockMessage}
+                                            </Typography>
+                                            {locationStatus === "denied" && (
+                                                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                                    Enable location to see nearest options.
+                                                </Typography>
+                                            )}
+                                        </Box>
+                                    </Grid>
+                                )}
+
+                                {requiresAlternative && (
+                                    <Grid item xs={12} sm={6}>
+                                        <FormControl fullWidth required error={!selectedAlternative}>
+                                            <InputLabel>Select Organization</InputLabel>
+                                            <Select
+                                                value={selectedAlternative}
+                                                label="Select Organization"
+                                                onChange={(e) => setSelectedAlternative(e.target.value)}
+                                            >
+                                                <MenuItem value="">Select organization with stock</MenuItem>
+                                                {stockCheck.alternatives.length === 0 && (
+                                                    <MenuItem value="" disabled>
+                                                        No alternatives available
+                                                    </MenuItem>
+                                                )}
+                                                {stockCheck.alternatives.map((alternative) => (
+                                                    <MenuItem key={alternative.id} value={alternative.id}>
+                                                        {alternative.name} ({alternative.role}) - {alternative.availableUnits} unit(s)
+                                                        {typeof alternative.distanceKm === "number"
+                                                            ? ` - ${alternative.distanceKm.toFixed(1)} km`
+                                                            : " - N/A km"}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                            {!selectedAlternative && (
+                                                <FormHelperText>Select an organization to continue.</FormHelperText>
+                                            )}
+                                        </FormControl>
+                                    </Grid>
+                                )}
 
                                 <Grid item xs={12}>
                                     <FormControl fullWidth>
@@ -1403,7 +1768,7 @@ const WelcomePage = () => {
                                             variant="contained"
                                             color="error"
                                             fullWidth
-                                            disabled={paymentLoading}
+                                            disabled={disablePaymentButton}
                                             onClick={handlePayment}
                                             sx={{ py: 1.5, fontSize: '1rem', borderRadius: 3 }}
                                         >
@@ -1415,6 +1780,7 @@ const WelcomePage = () => {
                                             variant="contained"
                                             color="error"
                                             fullWidth
+                                            disabled={disableSubmitButton}
                                             sx={{ py: 1.5, fontSize: '1rem', borderRadius: 3 }}
                                         >
                                             Submit Request

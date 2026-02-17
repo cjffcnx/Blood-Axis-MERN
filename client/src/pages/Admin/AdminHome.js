@@ -8,6 +8,7 @@ import LocalShippingOutlinedIcon from "@mui/icons-material/LocalShippingOutlined
 import GroupOutlinedIcon from "@mui/icons-material/GroupOutlined";
 import HowToRegOutlinedIcon from "@mui/icons-material/HowToRegOutlined";
 import AssignmentTurnedInOutlinedIcon from "@mui/icons-material/AssignmentTurnedInOutlined";
+import EmojiEventsOutlinedIcon from "@mui/icons-material/EmojiEventsOutlined";
 import "./AdminHome.css";
 
 const AdminHome = () => {
@@ -15,58 +16,58 @@ const AdminHome = () => {
 
   const quickActions = [
     {
-      title: "Inventory Overview",
-      desc: "Review stock levels, recent entries, and alerts.",
-      to: "/home",
-      icon: <Inventory2OutlinedIcon fontSize="inherit" />,
-    },
-    {
-      title: "IN / OUT Transactions",
-      desc: "Track all inbound and outbound blood units.",
-      to: "/requests",
-      icon: <SwapHorizOutlinedIcon fontSize="inherit" />,
-    },
-    {
-      title: "Dispatch Requests",
-      desc: "Approve and fulfill hospital blood requests.",
-      to: "/org-requests",
-      icon: <LocalShippingOutlinedIcon fontSize="inherit" />,
-    },
-    {
       title: "Manage Donors",
-      desc: "View donors and maintain donor records.",
+      desc: "View all donors, their donation history, and sort by donations or date.",
       to: "/donar-list",
       icon: <GroupOutlinedIcon fontSize="inherit" />,
     },
     {
       title: "Manage Hospitals",
-      desc: "Review hospital profiles and access.",
+      desc: "Review hospital profiles, contacts, and access permissions.",
       to: "/hospital-list",
       icon: <GroupOutlinedIcon fontSize="inherit" />,
     },
     {
+      title: "Manage Organizations",
+      desc: "Oversee organization accounts and their blood bank operations.",
+      to: "/org-list",
+      icon: <GroupOutlinedIcon fontSize="inherit" />,
+    },
+    {
+      title: "Blood Requests",
+      desc: "Review and process all blood donation requests in real-time.",
+      to: "/requests",
+      icon: <SwapHorizOutlinedIcon fontSize="inherit" />,
+    },
+    {
       title: "Approve Accounts",
-      desc: "Handle pending registration approvals.",
+      desc: "Handle pending registration and account access requests.",
       to: "/admin/account-requests",
       icon: <HowToRegOutlinedIcon fontSize="inherit" />,
+    },
+    {
+      title: "Certificate Requests",
+      desc: "Manage donor certificates, send emails, and track approvals.",
+      to: "/admin/certificate-requests",
+      icon: <EmojiEventsOutlinedIcon fontSize="inherit" />,
     },
   ];
 
   const capabilities = [
     {
-      title: "Inventory Control",
-      desc: "Keep blood stock balanced across all groups and locations.",
-      icon: <Inventory2OutlinedIcon fontSize="inherit" />,
+      title: "Donor Management",
+      desc: "Track donation counts, manage donor information, and recognize top contributors.",
+      icon: <GroupOutlinedIcon fontSize="inherit" />,
     },
     {
-      title: "Compliance & Safety",
-      desc: "Ensure approvals follow verification and eligibility checks.",
+      title: "Request Processing",
+      desc: "Review and approve blood requests from hospitals and organizations.",
       icon: <AssignmentTurnedInOutlinedIcon fontSize="inherit" />,
     },
     {
-      title: "Operational Oversight",
-      desc: "Coordinate requests, dispatch, and reporting workflows.",
-      icon: <SwapHorizOutlinedIcon fontSize="inherit" />,
+      title: "Certificate Awards",
+      desc: "Issue recognition certificates to donors with 8+ donations.",
+      icon: <EmojiEventsOutlinedIcon fontSize="inherit" />,
     },
   ];
 
@@ -81,20 +82,20 @@ const AdminHome = () => {
                 Welcome back, <span>{user?.name || "Admin"}</span>
               </h1>
               <p className="admin-tagline">
-                Keep the blood bank running smoothly with fast approvals, clear
-                oversight, and smart inventory control.
+                Keep the blood bank running smoothly with fast approvals, donor recognition,
+                and intelligent request management.
               </p>
             </div>
             <div className="admin-hero-panel">
               <div className="admin-hero-stat">
-                <span>Critical Tasks</span>
-                <strong>Approvals</strong>
-                <small>Account + request checks</small>
+                <span>Key Functions</span>
+                <strong>Management & Approvals</strong>
+                <small>Donors, hospitals, requests</small>
               </div>
               <div className="admin-hero-stat">
-                <span>Daily Focus</span>
-                <strong>Stock & Dispatch</strong>
-                <small>Balance supply with demand</small>
+                <span>Special Feature</span>
+                <strong>Donor Certificates</strong>
+                <small>Recognize active donors</small>
               </div>
             </div>
           </div>

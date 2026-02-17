@@ -103,6 +103,13 @@ const Sidebar = () => {
                 <i className="fa-solid fa-file-medical"></i>
                 <Link to="/requests">Blood Requests</Link>
               </div>
+              <div
+                className={`menu-item ${location.pathname === "/admin/certificate-requests" && "active"
+                  }`}
+              >
+                <i className="fa-solid fa-certificate"></i>
+                <Link to="/admin/certificate-requests">Certificate Requests</Link>
+              </div>
             </>
           )}
           {(user?.role === "donar" || user?.role === "hospital") && (

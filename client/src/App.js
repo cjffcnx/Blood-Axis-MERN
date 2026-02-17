@@ -25,6 +25,7 @@ import OrgList from "./pages/Admin/OrgList";
 import AdminHome from "./pages/Admin/AdminHome";
 import RequestList from "./pages/Admin/RequestList";
 import AccountRequests from "./pages/Admin/AccountRequests";
+import CertificateRequests from "./pages/Admin/CertificateRequests";
 import WelcomePage from "./pages/WelcomePage";
 import BloodRequests from "./pages/Dashboard/BloodRequests";
 import Terms from "./pages/Terms";
@@ -272,6 +273,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <AccountRequests />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/certificate-requests"
+            element={
+              <ProtectedRoute>
+                <CertificateRequests />
               </ProtectedRoute>
             }
           />

@@ -60,6 +60,16 @@ const accountRequestSchema = new mongoose.Schema(
         adminComments: {
             type: String,
         },
+        latitude: {
+            type: Number,
+            min: -90,
+            max: 90,
+        },
+        longitude: {
+            type: Number,
+            min: -180,
+            max: 180,
+        },
     },
     { timestamps: true }
 );

@@ -33,6 +33,8 @@ app.use("/api/v1/analytics", require("./routes/analyticsRoutes"));
 app.use("/api/v1/admin", require("./routes/adminRoutes"));
 app.use("/api/v1/admin/scheduler", require("./routes/schedulerRoutes").router);
 app.use("/api/v1/request", require("./routes/requestRoutes"));
+app.use("/api/v1/blood-request", require("./routes/bloodRequestRoutes"));
+app.use("/api/blood-request", require("./routes/bloodRequestRoutes"));
 app.use("/api/v1/account-requests", require("./routes/accountRequestRoutes"));
 app.use("/api/v1/donor-interest", require("./routes/donorInterestRoutes"));
 app.use("/api/v1/esewa", require("./routes/esewaRoutes"));

@@ -1,9 +1,11 @@
 const userModel = require("../models/userModel");
+const inventoryModel = require("../models/inventoryModel");
 
 //GET DONAR LIST
 const getDonarsListController = async (req, res) => {
   try {
     const search = (req.query.search || "").trim();
+    const sortBy = (req.query.sort || "date").trim();
     const baseFilter = { role: "donar" };
     const filter = search
       ? {
@@ -18,13 +20,52 @@ const getDonarsListController = async (req, res) => {
       }
       : baseFilter;
 
-    const donarData = await userModel.find(filter).sort({ createdAt: -1 });
+    // Determine sort order for createdAt
+    let dateSortOrder = -1; // -1 for newest first (default)
+    if (sortBy === "date-old") {
+      dateSortOrder = 1; // 1 for oldest first
+    }
+
+    // For date-based sorting, we can use MongoDB's natural sort
+    const donarData = await userModel
+      .find(filter)
+      .sort(
+        sortBy === "date" || sortBy === "date-old"
+          ? { createdAt: dateSortOrder }
+          : { createdAt: -1 } // default fallback
+      );
+
+    // Get donation counts for each donor from inventory (inventoryType: "in" = donation)
+    const donarDataWithDonationCount = await Promise.all(
+      donarData.map(async (donor) => {
+        const donationCount = await inventoryModel.countDocuments({
+          donar: donor._id,
+          inventoryType: "in",
+        });
+        return {
+          ...donor.toObject(),
+          donationCount,
+        };
+      })
+    );
+
+    // Sort by donations if requested
+    let finalData = donarDataWithDonationCount;
+    if (sortBy === "donations-high") {
+      finalData = donarDataWithDonationCount.sort(
+        (a, b) => b.donationCount - a.donationCount
+      );
+    } else if (sortBy === "donations-low") {
+      finalData = donarDataWithDonationCount.sort(
+        (a, b) => a.donationCount - b.donationCount
+      );
+    }
 
     return res.status(200).send({
       success: true,
-      Toatlcount: donarData.length,
+      Toatlcount: finalData.length,
       message: "Donar List Fetched Successfully",
-      donarData,
+      donarData: finalData,
     });
   } catch (error) {
     console.log(error);
@@ -187,7 +228,7 @@ const updateDonarController = async (req, res) => {
 const updateHospitalController = async (req, res) => {
   try {
     const hospitalId = req.params.id;
-    const { hospitalName, email, phone, address, website, isAvailable } = req.body;
+    const { hospitalName, email, phone, address, website, isAvailable, latitude, longitude } = req.body;
 
     const hospital = await userModel.findById(hospitalId);
     if (!hospital) {
@@ -216,6 +257,26 @@ const updateHospitalController = async (req, res) => {
     if (address !== undefined) hospital.address = address;
     if (website !== undefined) hospital.website = website;
     if (isAvailable !== undefined) hospital.isAvailable = isAvailable;
+    if (latitude !== undefined && latitude !== "") {
+      const parsedLatitude = Number(latitude);
+      if (!Number.isFinite(parsedLatitude) || parsedLatitude < -90 || parsedLatitude > 90) {
+        return res.status(400).send({
+          success: false,
+          message: "Latitude must be between -90 and 90",
+        });
+      }
+      hospital.latitude = parsedLatitude;
+    }
+    if (longitude !== undefined && longitude !== "") {
+      const parsedLongitude = Number(longitude);
+      if (!Number.isFinite(parsedLongitude) || parsedLongitude < -180 || parsedLongitude > 180) {
+        return res.status(400).send({
+          success: false,
+          message: "Longitude must be between -180 and 180",
+        });
+      }
+      hospital.longitude = parsedLongitude;
+    }
 
     await hospital.save();
 
@@ -238,7 +299,7 @@ const updateHospitalController = async (req, res) => {
 const updateOrgController = async (req, res) => {
   try {
     const orgId = req.params.id;
-    const { organisationName, email, phone, address, website, isAvailable } = req.body;
+    const { organisationName, email, phone, address, website, isAvailable, latitude, longitude } = req.body;
 
     const organisation = await userModel.findById(orgId);
     if (!organisation) {
@@ -267,6 +328,26 @@ const updateOrgController = async (req, res) => {
     if (address !== undefined) organisation.address = address;
     if (website !== undefined) organisation.website = website;
     if (isAvailable !== undefined) organisation.isAvailable = isAvailable;
+    if (latitude !== undefined && latitude !== "") {
+      const parsedLatitude = Number(latitude);
+      if (!Number.isFinite(parsedLatitude) || parsedLatitude < -90 || parsedLatitude > 90) {
+        return res.status(400).send({
+          success: false,
+          message: "Latitude must be between -90 and 90",
+        });
+      }
+      organisation.latitude = parsedLatitude;
+    }
+    if (longitude !== undefined && longitude !== "") {
+      const parsedLongitude = Number(longitude);
+      if (!Number.isFinite(parsedLongitude) || parsedLongitude < -180 || parsedLongitude > 180) {
+        return res.status(400).send({
+          success: false,
+          message: "Longitude must be between -180 and 180",
+        });
+      }
+      organisation.longitude = parsedLongitude;
+    }
 
     await organisation.save();
 

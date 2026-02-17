@@ -9,7 +9,7 @@ const { isValidPhone } = require("../utils/validation");
 // CREATE REQUEST (Public)
 const createRequestController = async (req, res) => {
     try {
-        const { name, phone, bloodGroup, message, email, quantity, hospitalName, paymentStatus, hospitalId } = req.body;
+        const { name, phone, bloodGroup, message, email, quantity, hospitalName, paymentStatus, hospitalId, organisationId } = req.body;
         // Validation
         if (!name || !phone || !bloodGroup) {
             return res.status(400).send({
@@ -47,6 +47,23 @@ const createRequestController = async (req, res) => {
             });
         }
 
+        let organisation = null;
+        if (organisationId) {
+            const organisationUser = await userModel.findOne({
+                _id: organisationId,
+                role: "organisation",
+            });
+
+            if (!organisationUser) {
+                return res.status(404).send({
+                    success: false,
+                    message: "Organisation not found",
+                });
+            }
+
+            organisation = organisationUser._id;
+        }
+
         const request = new requestModel({
             name,
             phone,
@@ -58,6 +75,7 @@ const createRequestController = async (req, res) => {
             attachment,
             paymentStatus: normalizedPaymentStatus,
             requestedHospital: hospitalId || null,
+            organisation,
             status: normalizedPaymentStatus === "paid" ? "approved" : "pending",
         });
 

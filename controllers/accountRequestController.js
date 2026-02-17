@@ -6,7 +6,28 @@ const { isValidPhone } = require("../utils/validation");
 // Create a new account request
 const createAccountRequestController = async (req, res) => {
     try {
-        const { email, password, phone } = req.body;
+        const { email, password, phone, latitude, longitude } = req.body;
+        if (latitude !== undefined && latitude !== "") {
+            const parsedLatitude = Number(latitude);
+            if (!Number.isFinite(parsedLatitude) || parsedLatitude < -90 || parsedLatitude > 90) {
+                return res.status(400).send({
+                    success: false,
+                    message: "Latitude must be between -90 and 90",
+                });
+            }
+            req.body.latitude = parsedLatitude;
+        }
+
+        if (longitude !== undefined && longitude !== "") {
+            const parsedLongitude = Number(longitude);
+            if (!Number.isFinite(parsedLongitude) || parsedLongitude < -180 || parsedLongitude > 180) {
+                return res.status(400).send({
+                    success: false,
+                    message: "Longitude must be between -180 and 180",
+                });
+            }
+            req.body.longitude = parsedLongitude;
+        }
         // Check if user already exists
         const existingUser = await userModel.findOne({ email });
         if (existingUser) {
@@ -132,6 +153,8 @@ const updateRequestStatusController = async (req, res) => {
                 website: request.website,
                 address: request.address,
                 phone: request.phone,
+                latitude: request.latitude,
+                longitude: request.longitude,
             });
             await newUser.save();
         }

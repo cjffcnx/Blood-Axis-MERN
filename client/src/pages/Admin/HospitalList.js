@@ -16,6 +16,8 @@ const HospitalList = () => {
     phone: "",
     address: "",
     website: "",
+    latitude: "",
+    longitude: "",
     isAvailable: true,
   });
   const [showEmailModal, setShowEmailModal] = useState(false);
@@ -60,6 +62,8 @@ const HospitalList = () => {
       phone: hospital.phone || "",
       address: hospital.address || "",
       website: hospital.website || "",
+      latitude: hospital.latitude ?? "",
+      longitude: hospital.longitude ?? "",
       isAvailable: hospital.isAvailable !== false,
     });
     setShowEditModal(true);
@@ -307,6 +311,28 @@ const HospitalList = () => {
                       className="form-control"
                       name="address"
                       value={editForm.address}
+                      onChange={handleEditChange}
+                    />
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label">Latitude</label>
+                    <input
+                      type="number"
+                      step="any"
+                      className="form-control"
+                      name="latitude"
+                      value={editForm.latitude}
+                      onChange={handleEditChange}
+                    />
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label">Longitude</label>
+                    <input
+                      type="number"
+                      step="any"
+                      className="form-control"
+                      name="longitude"
+                      value={editForm.longitude}
                       onChange={handleEditChange}
                     />
                   </div>

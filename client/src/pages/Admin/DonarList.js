@@ -8,6 +8,7 @@ const DonarList = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("date"); // "date" or "donations"
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedDonor, setSelectedDonor] = useState(null);
   const [editForm, setEditForm] = useState({
@@ -25,13 +26,14 @@ const DonarList = () => {
   const [sendingEmail, setSendingEmail] = useState(false);
 
   //find donar records
-  const getDonars = async (searchValue = "") => {
+  const getDonars = async (searchValue = "", sortValue = "date") => {
     try {
       setLoading(true);
       const params = {};
       if (searchValue.trim()) {
         params.search = searchValue.trim();
       }
+      params.sort = sortValue;
       const { data } = await API.get("/admin/donar-list", { params });
       if (data?.success) {
         setData(data?.donarData || []);
@@ -48,10 +50,10 @@ const DonarList = () => {
 
   useEffect(() => {
     const debounce = setTimeout(() => {
-      getDonars(searchTerm);
+      getDonars(searchTerm, sortBy);
     }, 300);
     return () => clearTimeout(debounce);
-  }, [searchTerm]);
+  }, [searchTerm, sortBy]);
 
   const openEditModal = (donor) => {
     setSelectedDonor(donor);
@@ -176,27 +178,43 @@ const DonarList = () => {
     <Layout>
       <div className="mb-4">
         <h3 className="mb-3">Donor List</h3>
-        <div className="input-group">
-          <span className="input-group-text">
-            <i className="fa-solid fa-search"></i>
-          </span>
-          <input
-            type="text"
-            className="form-control"
-            placeholder="Search name, email, phone, address, or city"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          {searchTerm && (
-            <button
-              className="btn btn-outline-secondary"
-              type="button"
-              onClick={() => setSearchTerm("")}
-              title="Clear search"
+        <div className="row g-3 mb-3">
+          <div className="col-md-8">
+            <div className="input-group">
+              <span className="input-group-text">
+                <i className="fa-solid fa-search"></i>
+              </span>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Search name, email, phone, address, or city"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              {searchTerm && (
+                <button
+                  className="btn btn-outline-secondary"
+                  type="button"
+                  onClick={() => setSearchTerm("")}
+                  title="Clear search"
+                >
+                  <i className="fa-solid fa-xmark"></i>
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="col-md-4">
+            <select
+              className="form-select"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
             >
-              <i className="fa-solid fa-xmark"></i>
-            </button>
-          )}
+              <option value="date">Sort by: Date (Newest)</option>
+              <option value="date-old">Sort by: Date (Oldest)</option>
+              <option value="donations-high">Sort by: Donations (High to Low)</option>
+              <option value="donations-low">Sort by: Donations (Low to High)</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -218,7 +236,7 @@ const DonarList = () => {
                 <th scope="col">Name</th>
                 <th scope="col">Email</th>
                 <th scope="col">Phone</th>
-                <th scope="col">Available</th>
+                <th scope="col">Number of Donations</th>
                 <th scope="col">Date</th>
                 <th scope="col">Action</th>
               </tr>
@@ -229,7 +247,7 @@ const DonarList = () => {
                   <td>{record.name || "N/A"}</td>
                   <td>{record.email}</td>
                   <td>{record.phone}</td>
-                  <td>{record.isAvailable ? "Yes" : "No"}</td>
+                  <td>{record.donationCount || 0}</td>
                   <td>{moment(record.createdAt).format("DD/MM/YYYY hh:mm A")}</td>
                   <td className="d-flex gap-2">
                     <button

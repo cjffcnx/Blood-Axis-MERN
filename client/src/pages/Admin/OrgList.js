@@ -19,6 +19,8 @@ const OrgList = () => {
     phone: "",
     address: "",
     website: "",
+    latitude: "",
+    longitude: "",
     isAvailable: true,
   });
   const [showEmailModal, setShowEmailModal] = useState(false);
@@ -96,6 +98,8 @@ const OrgList = () => {
       phone: org.phone || "",
       address: org.address || "",
       website: org.website || "",
+      latitude: org.latitude ?? "",
+      longitude: org.longitude ?? "",
       isAvailable: org.isAvailable !== false,
     });
     setShowEditModal(true);
@@ -342,6 +346,28 @@ const OrgList = () => {
                       className="form-control"
                       name="address"
                       value={editForm.address}
+                      onChange={handleEditChange}
+                    />
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label">Latitude</label>
+                    <input
+                      type="number"
+                      step="any"
+                      className="form-control"
+                      name="latitude"
+                      value={editForm.latitude}
+                      onChange={handleEditChange}
+                    />
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label">Longitude</label>
+                    <input
+                      type="number"
+                      step="any"
+                      className="form-control"
+                      name="longitude"
+                      value={editForm.longitude}
                       onChange={handleEditChange}
                     />
                   </div>

@@ -391,6 +391,47 @@ export default function DonorDashboard() {
                 </Button>
             </Paper>
 
+            {/* ----------- CERTIFICATE SECTION ----------- */}
+            <Paper sx={{ p: 3, mb: 4, backgroundColor: "#f5f5f5" }}>
+                <Typography variant="h6" sx={{ mb: 3, color: "#d32f2f" }}>
+                    🏅 Blood Donation Certificate Program
+                </Typography>
+
+                <Box sx={{ mb: 3 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+                        Certificate Requirements:
+                    </Typography>
+                    <Box sx={{ backgroundColor: "#fff", p: 2, borderRadius: 1, mb: 2 }}>
+                        <Typography sx={{ mb: 1 }}>
+                            ✓ <strong>Complete at least 8 donations</strong> - You must have successfully donated blood 8 times
+                        </Typography>
+                        <Typography sx={{ mb: 1 }}>
+                            ✓ <strong>Upload proof of all 8 donations</strong> - Submit a PDF file containing photos or proof of all 8 donations
+                        </Typography>
+                    </Box>
+                </Box>
+
+                <Box sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                        Your Donation Count: <strong sx={{ color: "#d32f2f" }}>{stats.totalDonations} / 8</strong>
+                    </Typography>
+                </Box>
+
+                <Button
+                    variant="contained"
+                    sx={{ backgroundColor: "#d32f2f" }}
+                    onClick={() => window.open("https://forms.gle/4Sq6cfH9wZ8XpGor6", "_blank")}
+                    disabled={stats.totalDonations < 8}
+                >
+                    🎖️ Request Certificate
+                </Button>
+                {stats.totalDonations < 8 && (
+                    <Typography variant="caption" sx={{ display: "block", mt: 1, color: "#d32f2f" }}>
+                        You need to complete {8 - stats.totalDonations} more donations to request a certificate
+                    </Typography>
+                )}
+            </Paper>
+
             {/* ----------- DONATE MODAL ----------- */}
             <Modal open={openDonate} onClose={() => setOpenDonate(false)}>
                 <Box
