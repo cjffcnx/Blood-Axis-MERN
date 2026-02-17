@@ -26,3 +26,8 @@ export function getPasswordError(password) {
     if (!/(?=.*\d)/.test(password)) return "Password must contain at least one number";
     return "";
 }
+
+export function isValidPhone(phone) {
+    if (!phone) return false;
+    return /^\d{10}$/.test(String(phone).trim());
+}

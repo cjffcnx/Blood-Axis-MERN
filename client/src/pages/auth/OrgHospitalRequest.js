@@ -5,7 +5,7 @@ import API from "../../services/API";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import Spinner from "../../components/shared/Spinner";
 import { toast } from "react-toastify";
-import { isValidEmail, isValidPassword, getPasswordError } from "../../utils/validation";
+import { isValidEmail, isValidPassword, getPasswordError, isValidPhone } from "../../utils/validation";
 
 const OrgHospitalRequest = () => {
     const [role, setRole] = useState("organisation");
@@ -21,12 +21,13 @@ const OrgHospitalRequest = () => {
     const [loading, setLoading] = useState(false);
     const [emailError, setEmailError] = useState("");
     const [passwordError, setPasswordError] = useState("");
+    const [phoneError, setPhoneError] = useState("");
 
     const navigate = useNavigate();
 
     const handleEmailBlur = () => {
         if (email && !isValidEmail(email)) {
-            setEmailError("Please enter a valid email address");
+            setEmailError("Email not in correct format");
         } else {
             setEmailError("");
         }
@@ -35,6 +36,15 @@ const OrgHospitalRequest = () => {
     const handlePasswordBlur = () => {
         const error = getPasswordError(password);
         setPasswordError(error);
+    };
+
+    const handlePhoneBlur = () => {
+        if (!phone) return;
+        if (!isValidPhone(phone)) {
+            setPhoneError("Phone number is not 10 digit");
+        } else {
+            setPhoneError("");
+        }
     };
 
     const handleFileChange = (e) => {
@@ -46,8 +56,8 @@ const OrgHospitalRequest = () => {
         try {
             // Validate email
             if (!isValidEmail(email)) {
-                setEmailError("Please enter a valid email address");
-                toast.error("Please enter a valid email address");
+                setEmailError("Email not in correct format");
+                toast.error("Email not in correct format");
                 return;
             }
 
@@ -56,6 +66,12 @@ const OrgHospitalRequest = () => {
             if (passwordErrorMsg) {
                 setPasswordError(passwordErrorMsg);
                 toast.error(passwordErrorMsg);
+                return;
+            }
+
+            if (!isValidPhone(phone)) {
+                setPhoneError("Phone number is not 10 digit");
+                toast.error("Phone number is not 10 digit");
                 return;
             }
 
@@ -271,11 +287,22 @@ const OrgHospitalRequest = () => {
                                     </label>
                                     <input
                                         type="text"
-                                        className="form-control"
+                                        className={`form-control ${phoneError ? 'is-invalid' : ''}`}
                                         value={phone}
-                                        onChange={(e) => setPhone(e.target.value)}
+                                        onChange={(e) => {
+                                            setPhone(e.target.value);
+                                            if (isValidPhone(e.target.value)) {
+                                                setPhoneError("");
+                                            }
+                                        }}
+                                        onBlur={handlePhoneBlur}
                                         required
                                     />
+                                    {phoneError && (
+                                        <div className="invalid-feedback" style={{ display: 'block' }}>
+                                            {phoneError}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="mb-3">

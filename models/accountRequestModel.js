@@ -42,6 +42,11 @@ const accountRequestSchema = new mongoose.Schema(
         phone: {
             type: String,
             required: [true, "phone number is required"],
+            trim: true,
+            validate: {
+                validator: (value) => /^\d{10}$/.test(String(value).trim()),
+                message: "Phone number must be exactly 10 digits",
+            },
         },
         proofFile: {
             type: String,

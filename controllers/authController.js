@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { sendEmail, isEmailConfigured } = require("../utils/emailService");
 const { getLogger } = require("../utils/logger");
+const { isValidPhone } = require("../utils/validation");
 
 const logger = getLogger("authController");
 
@@ -69,6 +70,13 @@ const requestRegisterOtpController = async (req, res) => {
       return res.status(400).send({
         success: false,
         message: "Required fields are missing",
+      });
+    }
+
+    if (!isValidPhone(phone)) {
+      return res.status(400).send({
+        success: false,
+        message: "Phone number must be exactly 10 digits",
       });
     }
 
@@ -170,7 +178,7 @@ const requestRegisterOtpController = async (req, res) => {
         otpExpiresAt,
         resendAvailableAt,
       },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
+      { upsert: true, new: true, setDefaultsOnInsert: true, runValidators: true }
     );
 
     return res.status(200).send({
@@ -492,6 +500,12 @@ const updateProfileController = async (req, res) => {
 
     // Check phone update restriction (12 hours)
     if (phone && phone !== user.phone) {
+      if (!isValidPhone(phone)) {
+        return res.status(400).send({
+          success: false,
+          message: "Phone number must be exactly 10 digits",
+        });
+      }
       if (user.lastPhoneUpdate) {
         const timeSinceLastPhoneUpdate = now - new Date(user.lastPhoneUpdate);
         if (timeSinceLastPhoneUpdate < twelveHoursInMs) {

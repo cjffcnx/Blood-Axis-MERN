@@ -13,6 +13,11 @@ const requestSchema = new mongoose.Schema(
         phone: {
             type: String,
             required: [true, "Phone number is required"],
+            trim: true,
+            validate: {
+                validator: (value) => /^\d{10}$/.test(String(value).trim()),
+                message: "Phone number must be exactly 10 digits",
+            },
         },
         bloodGroup: {
             type: String,

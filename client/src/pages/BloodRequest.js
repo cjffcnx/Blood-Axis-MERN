@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import API from "../services/API";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
+import { isValidEmail, isValidPhone } from "../utils/validation";
 
 const BloodRequest = () => {
     const [name, setName] = useState("");
@@ -15,6 +16,14 @@ const BloodRequest = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            if (!isValidPhone(phone)) {
+                toast.error("Phone number is not 10 digit");
+                return;
+            }
+            if (!isValidEmail(email)) {
+                toast.error("Email not in correct format");
+                return;
+            }
             const { data } = await API.post("/request/create-request", {
                 name,
                 email,

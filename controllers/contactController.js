@@ -1,4 +1,5 @@
 const { sendEmail, isEmailConfigured } = require("../utils/emailService");
+const { isValidPhone } = require("../utils/validation");
 
 const getContactRecipient = () => {
     const configured = (process.env.CONTACT_RECEIVER || "").trim();
@@ -21,6 +22,13 @@ const sendContactMessageController = async (req, res) => {
             return res.status(400).send({
                 success: false,
                 message: "Invalid email address",
+            });
+        }
+
+        if (phone && !isValidPhone(phone)) {
+            return res.status(400).send({
+                success: false,
+                message: "Phone number must be exactly 10 digits",
             });
         }
 

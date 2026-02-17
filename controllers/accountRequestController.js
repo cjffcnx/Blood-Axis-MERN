@@ -1,11 +1,12 @@
 const accountRequestModel = require("../models/accountRequestModel");
 const userModel = require("../models/userModel");
 const bcrypt = require("bcryptjs");
+const { isValidPhone } = require("../utils/validation");
 
 // Create a new account request
 const createAccountRequestController = async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { email, password, phone } = req.body;
         // Check if user already exists
         const existingUser = await userModel.findOne({ email });
         if (existingUser) {
@@ -23,6 +24,13 @@ const createAccountRequestController = async (req, res) => {
             return res.status(200).send({
                 success: false,
                 message: "Account request already pending",
+            });
+        }
+
+        if (!isValidPhone(phone)) {
+            return res.status(400).send({
+                success: false,
+                message: "Phone number must be exactly 10 digits",
             });
         }
 

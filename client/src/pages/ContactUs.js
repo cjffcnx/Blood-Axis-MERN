@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import API from "../services/API";
 import Footer from '../components/shared/Footer/Footer';
 import "./ContactUs.css";
+import { isValidEmail, isValidPhone } from "../utils/validation";
 
 const ContactUs = () => {
     const navigate = useNavigate();
@@ -31,6 +32,16 @@ const ContactUs = () => {
         setLoading(true);
 
         try {
+            if (!isValidEmail(formData.email)) {
+                toast.error("Email not in correct format");
+                setLoading(false);
+                return;
+            }
+            if (formData.phone && !isValidPhone(formData.phone)) {
+                toast.error("Phone number is not 10 digit");
+                setLoading(false);
+                return;
+            }
             const { data } = await API.post("/contact/send-message", formData);
 
             if (data?.success) {

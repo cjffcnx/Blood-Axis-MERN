@@ -47,6 +47,10 @@ const pendingRegistrationSchema = new mongoose.Schema(
             type: String,
             required: true,
             trim: true,
+            validate: {
+                validator: (value) => /^\d{10}$/.test(String(value).trim()),
+                message: "Phone number must be exactly 10 digits",
+            },
         },
         preferredCity: {
             type: String,

@@ -53,6 +53,11 @@ const userSchema = new mongoose.Schema(
     phone: {
       type: String,
       required: [true, "phone numbe is required"],
+      trim: true,
+      validate: {
+        validator: (value) => /^\d{10}$/.test(String(value).trim()),
+        message: "Phone number must be exactly 10 digits",
+      },
     },
     isAvailable: {
       type: Boolean,

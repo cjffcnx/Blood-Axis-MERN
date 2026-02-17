@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { handleLogin } from "../../../services/authService";
-import { isValidEmail, getPasswordError } from "../../../utils/validation";
+import { isValidEmail, getPasswordError, isValidPhone } from "../../../utils/validation";
 import { requestRegisterOtp, verifyRegisterOtp } from "../../../redux/features/auth/authActions";
 import { toast } from "react-toastify";
 
@@ -22,6 +22,7 @@ const Form = ({ formType, submitBtn, formTitle }) => {
   const [phone, setPhone] = useState("");
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [phoneError, setPhoneError] = useState("");
   const [registerStep, setRegisterStep] = useState(1);
   const [otp, setOtp] = useState("");
   const [otpError, setOtpError] = useState("");
@@ -58,6 +59,15 @@ const Form = ({ formType, submitBtn, formTitle }) => {
     setPasswordError(error);
   };
 
+  const handlePhoneBlur = () => {
+    if (!phone) return;
+    if (!isValidPhone(phone)) {
+      setPhoneError("Phone number must be exactly 10 digits");
+    } else {
+      setPhoneError("");
+    }
+  };
+
   const getRegisterPayload = () => ({
     name,
     role,
@@ -82,6 +92,11 @@ const Form = ({ formType, submitBtn, formTitle }) => {
     const passError = getPasswordError(password);
     if (passError) {
       setPasswordError(passError);
+      return;
+    }
+
+    if (!isValidPhone(phone)) {
+      setPhoneError("Phone number must be exactly 10 digits");
       return;
     }
 
@@ -308,7 +323,14 @@ const Form = ({ formType, submitBtn, formTitle }) => {
                         inputType={"text"}
                         name={"phone"}
                         value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
+                        onChange={(e) => {
+                          setPhone(e.target.value);
+                          if (isValidPhone(e.target.value)) {
+                            setPhoneError("");
+                          }
+                        }}
+                        onBlur={handlePhoneBlur}
+                        error={phoneError}
                         required={true}
                       />
                     </>

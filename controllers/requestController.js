@@ -4,6 +4,7 @@ const inventoryModel = require("../models/inventoryModel");
 const mongoose = require("mongoose");
 const fs = require("fs");
 const path = require("path");
+const { isValidPhone } = require("../utils/validation");
 
 // CREATE REQUEST (Public)
 const createRequestController = async (req, res) => {
@@ -14,6 +15,13 @@ const createRequestController = async (req, res) => {
             return res.status(400).send({
                 success: false,
                 message: "Please Provide All Fields",
+            });
+        }
+
+        if (!isValidPhone(phone)) {
+            return res.status(400).send({
+                success: false,
+                message: "Phone number must be exactly 10 digits",
             });
         }
 
