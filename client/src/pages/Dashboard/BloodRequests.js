@@ -4,6 +4,7 @@ import API from "../../services/API";
 import moment from "moment";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
+import jsPDF from "jspdf";
 
 
 const BloodRequests = () => {
@@ -11,6 +12,8 @@ const BloodRequests = () => {
     const [data, setData] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [filteredData, setFilteredData] = useState([]);
+    const [quantityEdits, setQuantityEdits] = useState({});
+    const [savingQuantityId, setSavingQuantityId] = useState(null);
 
     //get requests based on role
     const getRequests = async () => {
@@ -37,6 +40,20 @@ const BloodRequests = () => {
     useEffect(() => {
         getRequests();
     }, [user]);
+
+    useEffect(() => {
+        if (user?.role !== "hospital") return;
+
+        setQuantityEdits((prev) => {
+            const next = { ...prev };
+            data.forEach((record) => {
+                if (next[record._id] === undefined) {
+                    next[record._id] = record.quantity ?? "";
+                }
+            });
+            return next;
+        });
+    }, [data, user]);
 
     // Filter data based on search term
     useEffect(() => {
@@ -100,6 +117,66 @@ const BloodRequests = () => {
         }
     };
 
+    const handleQuantityChange = (id, value) => {
+        setQuantityEdits((prev) => ({
+            ...prev,
+            [id]: value,
+        }));
+    };
+
+    const handleUpdateQuantity = async (id) => {
+        try {
+            const nextQuantity = Number(quantityEdits[id]);
+            if (!Number.isFinite(nextQuantity) || nextQuantity <= 0) {
+                toast.error("Quantity must be a positive number");
+                return;
+            }
+
+            setSavingQuantityId(id);
+            const { data } = await API.put(`/request/update-quantity/${id}`, {
+                quantity: nextQuantity,
+            });
+
+            if (data?.success) {
+                toast.success(data.message);
+                getRequests();
+            } else {
+                toast.error(data.message || "Unable to update quantity");
+            }
+        } catch (error) {
+            console.log(error);
+            toast.error("Something went wrong");
+        } finally {
+            setSavingQuantityId(null);
+        }
+    };
+
+    const handleDownloadBill = (record) => {
+        const doc = new jsPDF();
+        const quantityValue = record.quantity ?? 0;
+
+        doc.setFontSize(16);
+        doc.text("Blood Request Bill", 20, 20);
+
+        doc.setFontSize(11);
+        const lines = [
+            `Bill ID: ${record._id}`,
+            `Generated: ${moment().format("DD/MM/YYYY hh:mm A")}`,
+            `Requester: ${record.hospital ? record.hospital.hospitalName : record.name}`,
+            `Phone: ${record.hospital ? record.hospital.phone : record.phone}`,
+            `Blood Group: ${record.bloodGroup || "N/A"}`,
+            `Quantity: ${quantityValue} Unit(s)`,
+            `Status: ${record.status || "N/A"}`,
+            `Payment Status: ${record.paymentStatus || "non-paid"}`,
+        ];
+
+        lines.forEach((line, index) => {
+            doc.text(line, 20, 35 + index * 8);
+        });
+
+        doc.save(`bill-${record._id}.pdf`);
+    };
+
     return (
         <Layout>
             <div className="container mt-4">
@@ -138,7 +215,9 @@ const BloodRequests = () => {
                         <tr>
                             <th scope="col">Requester</th>
                             <th scope="col">Blood Group</th>
-                            <th scope="col">Quantity</th>
+                            <th scope="col">
+                                {user?.role === "hospital" ? "Quantity (Units)" : "Quantity (ML)"}
+                            </th>
                             <th scope="col">Phone</th>
                             <th scope="col">Date</th>
                             <th scope="col">Status</th>
@@ -157,7 +236,33 @@ const BloodRequests = () => {
                                         {record.hospital ? record.hospital.hospitalName : record.name}
                                     </td>
                                     <td>{record.bloodGroup}</td>
-                                    <td>{record.quantity ? `${record.quantity} ML` : 'N/A'}</td>
+                                    <td>
+                                        {user?.role === "hospital" ? (
+                                            <div className="d-flex align-items-center gap-2">
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    className="form-control form-control-sm"
+                                                    style={{ maxWidth: "120px" }}
+                                                    value={quantityEdits[record._id] ?? ""}
+                                                    onChange={(e) => handleQuantityChange(record._id, e.target.value)}
+                                                />
+                                                <button
+                                                    className="btn btn-outline-primary btn-sm"
+                                                    onClick={() => handleUpdateQuantity(record._id)}
+                                                    disabled={
+                                                        savingQuantityId === record._id ||
+                                                        Number(quantityEdits[record._id]) === Number(record.quantity) ||
+                                                        !Number(quantityEdits[record._id])
+                                                    }
+                                                >
+                                                    {savingQuantityId === record._id ? "Saving..." : "Update"}
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            record.quantity ? `${record.quantity} ML` : "N/A"
+                                        )}
+                                    </td>
                                     <td>{record.hospital ? record.hospital.phone : record.phone}</td>
                                     <td>{moment(record.createdAt).format("DD/MM/YYYY hh:mm A")}</td>
                                     <td>
@@ -195,14 +300,24 @@ const BloodRequests = () => {
                                             {record.hospital ? (
                                                 <span className="text-muted">N/A</span>
                                             ) : (
-                                                record.paymentStatus !== "paid" && (
+                                                <div className="d-flex gap-2">
+                                                    {record.paymentStatus !== "paid" && (
+                                                        <button
+                                                            className="btn btn-outline-success btn-sm"
+                                                            onClick={() => handleMarkPaid(record._id)}
+                                                        >
+                                                            Mark Paid
+                                                        </button>
+                                                    )}
                                                     <button
-                                                        className="btn btn-outline-success btn-sm"
-                                                        onClick={() => handleMarkPaid(record._id)}
+                                                        className="btn btn-outline-primary btn-sm"
+                                                        onClick={() => handleDownloadBill(record)}
+                                                        disabled={record.paymentStatus !== "paid"}
+                                                        title={record.paymentStatus !== "paid" ? "Mark paid to enable bill" : "Download bill"}
                                                     >
-                                                        Mark Paid
+                                                        Download Bill
                                                     </button>
-                                                )
+                                                </div>
                                             )}
                                         </td>
                                     )}

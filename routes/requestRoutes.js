@@ -14,7 +14,8 @@ const {
     approveRequestController,
     rejectRequestController,
     getOrganisationsController,
-    updatePaymentStatusController
+    updatePaymentStatusController,
+    updateRequestQuantityController
 } = require("../controllers/requestController");
 const authMiddleware = require("../middlewares/authMiddleware");
 const adminMiddleware = require("../middlewares/adminMiddleware");
@@ -82,5 +83,8 @@ router.put("/reject/:id", authMiddleware, rejectRequestController);
 
 // UPDATE PAYMENT STATUS || PUT
 router.put("/payment-status/:id", authMiddleware, updatePaymentStatusController);
+
+// UPDATE REQUEST QUANTITY (Hospital) || PUT
+router.put("/update-quantity/:id", authMiddleware, updateRequestQuantityController);
 
 module.exports = router;

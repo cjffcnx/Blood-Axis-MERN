@@ -8,10 +8,12 @@ const BloodRequest = () => {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [phone, setPhone] = useState("");
+    const [phoneError, setPhoneError] = useState("");
     const [bloodGroup, setBloodGroup] = useState("");
     const [quantity, setQuantity] = useState("");
     const [hospitalName, setHospitalName] = useState("");
     const [message, setMessage] = useState("");
+    const [emailError, setEmailError] = useState("");
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -83,21 +85,47 @@ const BloodRequest = () => {
                                         <label className="form-label">Email</label>
                                         <input
                                             type="email"
-                                            className="form-control"
+                                            className={`form-control ${emailError ? "is-invalid" : ""}`}
                                             value={email}
-                                            onChange={(e) => setEmail(e.target.value)}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                setEmail(value);
+                                                if (!value || isValidEmail(value)) {
+                                                    setEmailError("");
+                                                } else {
+                                                    setEmailError("Email not in correct format");
+                                                }
+                                            }}
                                             required
                                         />
+                                        {emailError && (
+                                            <div className="invalid-feedback" style={{ display: "block" }}>
+                                                {emailError}
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="col-md-6 mb-3">
                                         <label className="form-label">Phone</label>
                                         <input
                                             type="text"
-                                            className="form-control"
+                                            className={`form-control ${phoneError ? "is-invalid" : ""}`}
                                             value={phone}
-                                            onChange={(e) => setPhone(e.target.value)}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                setPhone(value);
+                                                if (!value || isValidPhone(value)) {
+                                                    setPhoneError("");
+                                                } else {
+                                                    setPhoneError("Phone number is not 10 digit");
+                                                }
+                                            }}
                                             required
                                         />
+                                        {phoneError && (
+                                            <div className="invalid-feedback" style={{ display: "block" }}>
+                                                {phoneError}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                                 <div className="row">

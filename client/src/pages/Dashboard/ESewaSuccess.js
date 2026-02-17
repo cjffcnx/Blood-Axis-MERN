@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Layout from "../../components/shared/Layout/Layout";
 import API from "../../services/API";
+import jsPDF from "jspdf";
 
 const ESewaSuccess = () => {
     const [searchParams] = useSearchParams();
@@ -175,8 +176,13 @@ const ESewaSuccess = () => {
 
     const downloadReceipt = () => {
         if (!receiptData) return;
+        const doc = new jsPDF();
+
+        doc.setFontSize(16);
+        doc.text("Blood Bank Payment Receipt", 20, 20);
+
+        doc.setFontSize(11);
         const lines = [
-            "Blood Bank Payment Receipt",
             `Flow: ${receiptData.flow}`,
             `Transaction ID: ${receiptData.transactionId}`,
             `Paid At: ${receiptData.paidAt}`,
@@ -188,15 +194,11 @@ const ESewaSuccess = () => {
             receiptData.organisationId ? `Organisation ID: ${receiptData.organisationId}` : null,
         ].filter(Boolean);
 
-        const blob = new Blob([lines.join("\n")], { type: "text/plain" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `receipt-${receiptData.transactionId || Date.now()}.txt`;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        URL.revokeObjectURL(url);
+        lines.forEach((line, index) => {
+            doc.text(line, 20, 35 + index * 8);
+        });
+
+        doc.save(`receipt-${receiptData.transactionId || Date.now()}.pdf`);
     };
 
     return (

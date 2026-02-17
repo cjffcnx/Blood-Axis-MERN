@@ -663,6 +663,72 @@ const updatePaymentStatusController = async (req, res) => {
     }
 };
 
+// UPDATE REQUEST QUANTITY (Hospital)
+const updateRequestQuantityController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { quantity } = req.body;
+
+        const parsedQuantity = Number(quantity);
+        if (!Number.isFinite(parsedQuantity) || parsedQuantity <= 0) {
+            return res.status(400).send({
+                success: false,
+                message: "Quantity must be a positive number",
+            });
+        }
+
+        const user = await userModel.findById(req.body.userId).select("role");
+        if (!user || user.role !== "hospital") {
+            return res.status(403).send({
+                success: false,
+                message: "Only hospitals can update request quantity",
+            });
+        }
+
+        const request = await requestModel.findById(id);
+        if (!request) {
+            return res.status(404).send({
+                success: false,
+                message: "Request not found",
+            });
+        }
+
+        const userId = req.body.userId;
+        const isHospitalRequestOwner = request.hospital && request.hospital.toString() === userId;
+        const isAssignedPublicRequest = request.requestedHospital && request.requestedHospital.toString() === userId;
+
+        if (!isHospitalRequestOwner && !isAssignedPublicRequest) {
+            return res.status(403).send({
+                success: false,
+                message: "You are not allowed to update this request",
+            });
+        }
+
+        if (["fulfilled", "completed"].includes(request.status)) {
+            return res.status(400).send({
+                success: false,
+                message: "Cannot update quantity for fulfilled or completed requests",
+            });
+        }
+
+        request.quantity = parsedQuantity;
+        await request.save();
+
+        return res.status(200).send({
+            success: true,
+            message: "Request quantity updated",
+            request,
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).send({
+            success: false,
+            message: "Error updating request quantity",
+            error,
+        });
+    }
+};
+
 // LIST ORGANISATIONS (for hospital selection)
 const getOrganisationsController = async (req, res) => {
     try {
@@ -700,5 +766,6 @@ module.exports = {
     approveRequestController,
     rejectRequestController,
     getOrganisationsController,
-    updatePaymentStatusController
+    updatePaymentStatusController,
+    updateRequestQuantityController
 };

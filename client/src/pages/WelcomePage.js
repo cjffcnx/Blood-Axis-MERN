@@ -16,7 +16,8 @@ import {
     Select,
     FormControl,
     InputLabel,
-    InputAdornment
+    InputAdornment,
+    FormHelperText
 } from '@mui/material';
 import {
     LocationOn,
@@ -34,17 +35,22 @@ import API from '../services/API';
 import axios from "axios";
 import { toast } from 'react-toastify';
 import Footer from '../components/shared/Footer/Footer';
+import { isValidEmail, isValidPhone } from '../utils/validation';
 
 const WelcomePage = () => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         name: "",
+        email: "",
         phone: "",
         bloodGroup: "",
         quantity: "",
         message: "",
     });
+    const [emailError, setEmailError] = useState("");
+    const [phoneError, setPhoneError] = useState("");
     const [selectedHospital, setSelectedHospital] = useState("");
+    const [hospitalError, setHospitalError] = useState("");
     const [hospitals, setHospitals] = useState([]);
     const [loadingHospitals, setLoadingHospitals] = useState(false);
     const [fileName, setFileName] = useState("No file chosen");
@@ -815,7 +821,26 @@ const WelcomePage = () => {
     );
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
+
+        if (name === "email") {
+            if (!value) {
+                setEmailError("Email is required");
+            } else if (!isValidEmail(value)) {
+                setEmailError("Email not in correct format");
+            } else {
+                setEmailError("");
+            }
+        }
+
+        if (name === "phone") {
+            if (!value || isValidPhone(value)) {
+                setPhoneError("");
+            } else {
+                setPhoneError("Phone number is not 10 digit");
+            }
+        }
     };
 
     const handleFileChange = (e) => {
@@ -837,12 +862,34 @@ const WelcomePage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            if (!formData.email) {
+                setEmailError("Email is required");
+                return;
+            }
+
+            if (!isValidEmail(formData.email)) {
+                setEmailError("Email not in correct format");
+                return;
+            }
+
+            if (!isValidPhone(formData.phone)) {
+                setPhoneError("Phone number is not 10 digit");
+                return;
+            }
+
+            if (!selectedHospital) {
+                setHospitalError("Hospital is required");
+                toast.error("Please select a hospital");
+                return;
+            }
+
             if (!file) {
                 toast.error("Please upload the requisition form");
                 return;
             }
             const data = new FormData();
             data.append('name', formData.name);
+            if (formData.email) data.append('email', formData.email);
             data.append('phone', formData.phone);
             data.append('bloodGroup', formData.bloodGroup);
             if (formData.quantity) data.append('quantity', formData.quantity);
@@ -856,7 +903,9 @@ const WelcomePage = () => {
             const res = await API.post("/request/create-request", data);
             if (res.data?.success) {
                 toast.success("Blood Request Submitted Successfully");
-                setFormData({ name: "", phone: "", bloodGroup: "", quantity: "", message: "" });
+                setFormData({ name: "", email: "", phone: "", bloodGroup: "", quantity: "", message: "" });
+                setEmailError("");
+                setPhoneError("");
                 setSelectedHospital("");
                 setFileName("No file chosen");
                 setFile(null);
@@ -875,7 +924,26 @@ const WelcomePage = () => {
             return;
         }
 
+        if (!formData.email) {
+            setEmailError("Email is required");
+            toast.error("Email is required");
+            return;
+        }
+
+        if (!isValidEmail(formData.email)) {
+            setEmailError("Email not in correct format");
+            toast.error("Email not in correct format");
+            return;
+        }
+
+        if (!isValidPhone(formData.phone)) {
+            setPhoneError("Phone number is not 10 digit");
+            toast.error("Phone number is not 10 digit");
+            return;
+        }
+
         if (!selectedHospital) {
+            setHospitalError("Hospital is required");
             toast.error("Please select a hospital before paying");
             return;
         }
@@ -914,6 +982,7 @@ const WelcomePage = () => {
                 "pendingEmergencyRequestPayload",
                 JSON.stringify({
                     name: formData.name,
+                    email: formData.email,
                     phone: formData.phone,
                     bloodGroup: formData.bloodGroup,
                     quantity: formData.quantity,
@@ -1180,10 +1249,25 @@ const WelcomePage = () => {
                                 <Grid item xs={12} sm={6}>
                                     <TextField
                                         fullWidth
+                                        label="Email"
+                                        name="email"
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        error={Boolean(emailError)}
+                                        helperText={emailError}
+                                        required
+                                    />
+                                </Grid>
+
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        fullWidth
                                         label="Phone (फोन)"
                                         name="phone"
                                         value={formData.phone}
                                         onChange={handleChange}
+                                        error={Boolean(phoneError)}
+                                        helperText={phoneError}
                                         required
                                     />
                                 </Grid>
@@ -1210,15 +1294,24 @@ const WelcomePage = () => {
                                 </Grid>
 
                                 <Grid item xs={12} sm={6}>
-                                    <TextField
-                                        fullWidth
-                                        label="Quantity (ML)"
-                                        name="quantity"
-                                        type="number"
-                                        value={formData.quantity}
-                                        onChange={handleChange}
-                                        inputProps={{ min: 0 }}
-                                    />
+                                    <FormControl fullWidth required>
+                                        <InputLabel>Units</InputLabel>
+                                        <Select
+                                            name="quantity"
+                                            value={formData.quantity}
+                                            label="Units"
+                                            onChange={handleChange}
+                                        >
+                                            <MenuItem value="">Select units</MenuItem>
+                                            <MenuItem value="1">1 unit (350 ml or 450 ml)</MenuItem>
+                                            <MenuItem value="2">2 units</MenuItem>
+                                            <MenuItem value="3">3 units</MenuItem>
+                                            <MenuItem value="4">4 units</MenuItem>
+                                        </Select>
+                                    </FormControl>
+                                    <Typography variant="caption" sx={{ fontStyle: 'italic', color: 'text.secondary' }}>
+                                        1 unit equals 350 ml or 450 ml.
+                                    </Typography>
                                 </Grid>
 
                                 <Grid item xs={12} sm={6}>
@@ -1233,12 +1326,17 @@ const WelcomePage = () => {
                                 </Grid>
 
                                 <Grid item xs={12} sm={6}>
-                                    <FormControl fullWidth>
+                                    <FormControl fullWidth required error={Boolean(hospitalError)}>
                                         <InputLabel>Hospital (optional)</InputLabel>
                                         <Select
                                             value={selectedHospital}
                                             label="Hospital (optional)"
-                                            onChange={(e) => setSelectedHospital(e.target.value)}
+                                            onChange={(e) => {
+                                                setSelectedHospital(e.target.value);
+                                                if (e.target.value) {
+                                                    setHospitalError("");
+                                                }
+                                            }}
                                         >
                                             <MenuItem value="">
                                                 {loadingHospitals ? "Loading hospitals..." : "Select hospital"}
@@ -1249,6 +1347,9 @@ const WelcomePage = () => {
                                                 </MenuItem>
                                             ))}
                                         </Select>
+                                        {hospitalError && (
+                                            <FormHelperText>{hospitalError}</FormHelperText>
+                                        )}
                                     </FormControl>
                                 </Grid>
 
