@@ -4,7 +4,7 @@ Blood Bank Management System with AI demand forecasting is a MERN-stack web appl
 
 ## Methodology
 
-For the Blood-Axis-MERN project, an iterative development methodology was employed to facilitate a responsive and user-centered design process. This structured approach guided the project through key phases including requirement analysis, system architecture design, role-based interface development, AI forecasting integration, testing, and deployment. By improvising continuous feedback loops and incremental improvements, the team was able to adapt to emerging stakeholder needs and refine the platform's features accordingly, ensuring seamless blood bank management and intelligent demand forecasting capabilities.
+For the Blood-Axis-MERN project, an iterative development methodology was employed to facilitate a responsive and user-centered design process. This structured approach guided the project through key phases including requirement analysis, system architecture design, role-based interface development, AI forecasting integration, testing, and deployment. By implementing continuous feedback loops and incremental improvements, the team was able to adapt to emerging stakeholder needs and refine the platform's features accordingly, ensuring seamless blood bank management and intelligent demand forecasting capabilities.
 
 ## Features
 
