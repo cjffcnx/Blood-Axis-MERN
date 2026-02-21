@@ -1377,3 +1377,10 @@
 2026-02-17 12:52:49 - api - INFO - Retrieved 56 forecast records
 2026-02-17 12:52:49 - api - INFO - Grouped into 8 blood groups
 2026-02-17 12:52:49 - database - INFO - MongoDB connection closed
+2026-02-21 19:22:00 - database - INFO - MongoDB connection established successfully
+2026-02-21 19:22:01 - database - INFO - MongoDB connection established successfully
+2026-02-21 19:22:01 - database - INFO - Latest forecast date for org 6922ae4a3dae846e73b5a839: 2026-02-17 05:41:57.341000
+2026-02-21 19:22:01 - database - INFO - Retrieved 56 forecast records for organisation 6922ae4a3dae846e73b5a839
+2026-02-21 19:22:01 - api - INFO - Retrieved 56 forecast records
+2026-02-21 19:22:01 - api - INFO - Grouped into 8 blood groups
+2026-02-21 19:22:01 - database - INFO - MongoDB connection closed
