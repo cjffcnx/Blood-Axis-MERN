@@ -97,9 +97,10 @@ const RequestSupply = () => {
             const productName = `Blood Supply Request - ${bloodGroup}`;
 
             // Persist request data for post-payment creation
+            const paymentAmount = amount;
             sessionStorage.setItem(
                 "pendingRequestPayload",
-                JSON.stringify({ bloodGroup, quantity, message, organisationId })
+                JSON.stringify({ bloodGroup, quantity, message, organisationId, paymentAmount })
             );
 
             const response = await axios.post("http://localhost:5000/api/v1/esewa/initiate", {

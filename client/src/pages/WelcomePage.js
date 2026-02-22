@@ -1294,6 +1294,7 @@ const WelcomePage = () => {
                     hospitalId: provider.hospitalId,
                     organisationId: provider.organisationId,
                     attachmentPath: uploadedAttachmentPath,
+                    paymentAmount: amount,
                 })
             );
 

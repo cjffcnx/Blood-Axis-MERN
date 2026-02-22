@@ -154,6 +154,7 @@ const BloodRequests = () => {
     const handleDownloadBill = (record) => {
         const doc = new jsPDF();
         const quantityValue = record.quantity ?? 0;
+        const paymentAmount = record.paymentAmount || 0;
 
         doc.setFontSize(16);
         doc.text("Blood Request Bill", 20, 20);
@@ -168,7 +169,8 @@ const BloodRequests = () => {
             `Quantity: ${quantityValue} Unit(s)`,
             `Status: ${record.status || "N/A"}`,
             `Payment Status: ${record.paymentStatus || "non-paid"}`,
-        ];
+            paymentAmount > 0 ? `Amount Paid: Rs ${paymentAmount}` : null,
+        ].filter(Boolean);
 
         lines.forEach((line, index) => {
             doc.text(line, 20, 35 + index * 8);
@@ -222,6 +224,7 @@ const BloodRequests = () => {
                             <th scope="col">Date</th>
                             <th scope="col">Status</th>
                             <th scope="col">Paid</th>
+                            <th scope="col">Amount</th>
                             {user?.role === "hospital" && <th scope="col">Document</th>}
                             {(user?.role === "hospital" || user?.role === "organisation") && (
                                 <th scope="col">Action</th>
@@ -272,6 +275,11 @@ const BloodRequests = () => {
                                         <span className={`badge ${record.paymentStatus === "paid" ? "bg-success" : "bg-secondary"}`}>
                                             {record.paymentStatus || "non-paid"}
                                         </span>
+                                    </td>
+                                    <td>
+                                        {record.paymentAmount && record.paymentAmount > 0
+                                            ? `Rs ${record.paymentAmount}`
+                                            : "-"}
                                     </td>
                                     {user?.role === "hospital" && (
                                         <td>
@@ -327,7 +335,7 @@ const BloodRequests = () => {
                             ))
                         ) : (
                             <tr>
-                                <td colSpan={user?.role === "hospital" ? 9 : user?.role === "organisation" ? 8 : 7} className="text-center text-muted py-4">
+                                <td colSpan={user?.role === "hospital" ? 10 : user?.role === "organisation" ? 9 : 8} className="text-center text-muted py-4">
                                     {searchTerm ? (
                                         <>
                                             <i className="fa-solid fa-search me-2"></i>

@@ -9,7 +9,7 @@ const { isValidPhone } = require("../utils/validation");
 // CREATE REQUEST (Public)
 const createRequestController = async (req, res) => {
     try {
-        const { name, phone, bloodGroup, message, email, quantity, hospitalName, paymentStatus, hospitalId, organisationId } = req.body;
+        const { name, phone, bloodGroup, message, email, quantity, hospitalName, paymentStatus, hospitalId, organisationId, paymentAmount } = req.body;
         // Validation
         if (!name || !phone || !bloodGroup) {
             return res.status(400).send({
@@ -74,6 +74,7 @@ const createRequestController = async (req, res) => {
             hospitalName,
             attachment,
             paymentStatus: normalizedPaymentStatus,
+            paymentAmount: paymentAmount || 0,
             requestedHospital: hospitalId || null,
             organisation,
             status: normalizedPaymentStatus === "paid" ? "approved" : "pending",
@@ -292,7 +293,7 @@ const updateRequestStatusController = async (req, res) => {
 // CREATE HOSPITAL REQUEST (Hospital)
 const createHospitalRequestController = async (req, res) => {
     try {
-        const { bloodGroup, quantity, message, organisationId, paymentStatus } = req.body;
+        const { bloodGroup, quantity, message, organisationId, paymentStatus, paymentAmount } = req.body;
         // Validation
         if (!bloodGroup || !quantity) {
             return res.status(400).send({
@@ -327,6 +328,7 @@ const createHospitalRequestController = async (req, res) => {
             organisation: organisationId, // Required target organisation
             status: "pending",
             paymentStatus: paymentStatus === "paid" ? "paid" : "non-paid",
+            paymentAmount: paymentAmount || 0,
         });
 
         await request.save();

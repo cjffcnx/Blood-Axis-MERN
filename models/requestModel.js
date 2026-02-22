@@ -58,6 +58,10 @@ const requestSchema = new mongoose.Schema(
             enum: ["paid", "non-paid"],
             default: "non-paid",
         },
+        paymentAmount: {
+            type: Number,
+            default: 0,
+        },
     },
     { timestamps: true }
 );
