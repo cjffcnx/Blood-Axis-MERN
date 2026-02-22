@@ -2,10 +2,32 @@ const mongoose = require("mongoose");
 const inventoryModel = require("../models/inventoryModel");
 const userModel = require("../models/userModel");
 
+const EXPIRY_DAYS = 42;
+const DISPOSAL_METHODS = ["incineration", "biohazard", "autoclave", "chemical", "other"];
+
+const getExpiryCutoffDate = () => {
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - EXPIRY_DAYS);
+  return cutoffDate;
+};
+
+const getRoleScopedInventoryQuery = (role, userId) => {
+  if (role === "organisation") {
+    return { organisation: userId, inventoryType: "in" };
+  }
+
+  if (role === "hospital") {
+    return { hospital: userId, inventoryType: "out" };
+  }
+
+  return null;
+};
+
 // CREATE INVENTORY
 const createInventoryController = async (req, res) => {
   try {
     const { email } = req.body;
+    const expiryCutoffDate = getExpiryCutoffDate();
     //validation
     const user = await userModel.findOne({ email });
     if (!user) {
@@ -29,6 +51,9 @@ const createInventoryController = async (req, res) => {
             organisation,
             inventoryType: "in",
             bloodGroup: requestedBloodGroup,
+            createdAt: { $gte: expiryCutoffDate },
+            isDisposed: { $ne: true },
+            isMarkedExpired: { $ne: true },
           },
         },
         {
@@ -93,9 +118,19 @@ const createInventoryController = async (req, res) => {
 // GET ALL BLOOD RECORS
 const getInventoryController = async (req, res) => {
   try {
+    const expiryCutoffDate = getExpiryCutoffDate();
     const inventory = await inventoryModel
       .find({
         organisation: req.body.userId,
+        $or: [
+          { inventoryType: "out" },
+          {
+            inventoryType: "in",
+            createdAt: { $gte: expiryCutoffDate },
+            isDisposed: { $ne: true },
+            isMarkedExpired: { $ne: true },
+          },
+        ],
       })
       .populate("donar")
       .populate("hospital")
@@ -143,9 +178,19 @@ const getInventoryHospitalController = async (req, res) => {
 // GET BLOOD RECORD OF 3
 const getRecentInventoryController = async (req, res) => {
   try {
+    const expiryCutoffDate = getExpiryCutoffDate();
     const inventory = await inventoryModel
       .find({
         organisation: req.body.userId,
+        $or: [
+          { inventoryType: "out" },
+          {
+            inventoryType: "in",
+            createdAt: { $gte: expiryCutoffDate },
+            isDisposed: { $ne: true },
+            isMarkedExpired: { $ne: true },
+          },
+        ],
       })
       .limit(3)
       .sort({ createdAt: -1 })
@@ -380,6 +425,197 @@ const getOrgnaisationForHospitalController = async (req, res) => {
   }
 };
 
+const getExpiredBloodController = async (req, res) => {
+  try {
+    const userId = req.body.userId;
+    const expiryCutoffDate = getExpiryCutoffDate();
+    const user = await userModel.findById(userId).select("role");
+
+    if (!user || !["organisation", "hospital"].includes(user.role)) {
+      return res.status(403).send({
+        success: false,
+        message: "Only organisation and hospital can view expired blood records",
+      });
+    }
+
+    const scopeQuery = getRoleScopedInventoryQuery(user.role, userId);
+    const query = {
+      ...scopeQuery,
+      isDisposed: { $ne: true },
+      $or: [
+        { createdAt: { $lt: expiryCutoffDate } },
+        { isMarkedExpired: true },
+      ],
+    };
+
+    const expiredInventory = await inventoryModel
+      .find(query)
+      .populate("donar", "name email phone address")
+      .populate("hospital", "hospitalName email phone address")
+      .populate("organisation", "organisationName email phone address")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const normalizedInventory = expiredInventory.map((record) => {
+      const createdAtDate = new Date(record.createdAt);
+      const ageInDays = Math.floor((Date.now() - createdAtDate.getTime()) / (1000 * 60 * 60 * 24));
+      const expiresAt = record.isMarkedExpired && record.expiredAt
+        ? new Date(record.expiredAt)
+        : new Date(createdAtDate);
+      if (!(record.isMarkedExpired && record.expiredAt)) {
+        expiresAt.setDate(expiresAt.getDate() + EXPIRY_DAYS);
+      }
+
+      return {
+        ...record,
+        ageInDays,
+        expiresAt,
+      };
+    });
+
+    return res.status(200).send({
+      success: true,
+      message: "Expired blood records fetched successfully",
+      expiredInventory: normalizedInventory,
+      expiryDays: EXPIRY_DAYS,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({
+      success: false,
+      message: "Error in expired blood API",
+      error,
+    });
+  }
+};
+
+const markBloodDisposedController = async (req, res) => {
+  try {
+    const { inventoryId, disposalMethod } = req.body;
+    const userId = req.body.userId;
+    const user = await userModel.findById(userId).select("role");
+    const expiryCutoffDate = getExpiryCutoffDate();
+
+    if (!user || !["organisation", "hospital"].includes(user.role)) {
+      return res.status(403).send({
+        success: false,
+        message: "Only organisation and hospital can dispose blood records",
+      });
+    }
+
+    if (!inventoryId) {
+      return res.status(400).send({
+        success: false,
+        message: "Inventory id is required",
+      });
+    }
+
+    if (!DISPOSAL_METHODS.includes(disposalMethod)) {
+      return res.status(400).send({
+        success: false,
+        message: "Invalid disposal method",
+      });
+    }
+
+    const scopeQuery = getRoleScopedInventoryQuery(user.role, userId);
+    const inventoryRecord = await inventoryModel.findOne({
+      _id: inventoryId,
+      ...scopeQuery,
+    });
+
+    if (!inventoryRecord) {
+      return res.status(404).send({
+        success: false,
+        message: "Inventory record not found",
+      });
+    }
+
+    if (inventoryRecord.createdAt >= expiryCutoffDate && !inventoryRecord.isMarkedExpired) {
+      return res.status(400).send({
+        success: false,
+        message: `Only blood older than ${EXPIRY_DAYS} days can be disposed`,
+      });
+    }
+
+    if (inventoryRecord.isDisposed) {
+      return res.status(409).send({
+        success: false,
+        message: "This blood record is already disposed",
+      });
+    }
+
+    inventoryRecord.isDisposed = true;
+    inventoryRecord.disposedAt = new Date();
+    inventoryRecord.disposalMethod = disposalMethod;
+    await inventoryRecord.save();
+
+    return res.status(200).send({
+      success: true,
+      message: "Blood marked as disposed successfully",
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({
+      success: false,
+      message: "Error while disposing blood",
+      error,
+    });
+  }
+};
+
+const getDisposedHistoryController = async (req, res) => {
+  try {
+    const userId = req.body.userId;
+    const user = await userModel.findById(userId).select("role");
+
+    if (!user || !["organisation", "hospital"].includes(user.role)) {
+      return res.status(403).send({
+        success: false,
+        message: "Only organisation and hospital can view disposed history",
+      });
+    }
+
+    const scopeQuery = getRoleScopedInventoryQuery(user.role, userId);
+    const disposedHistory = await inventoryModel
+      .find({
+        ...scopeQuery,
+        isDisposed: true,
+      })
+      .populate("donar", "name email phone address")
+      .populate("hospital", "hospitalName email phone address")
+      .populate("organisation", "organisationName email phone address")
+      .sort({ disposedAt: -1 })
+      .lean();
+
+    const normalizedHistory = disposedHistory.map((record) => {
+      const createdAtDate = new Date(record.createdAt);
+      const ageInDays = Math.floor((Date.now() - createdAtDate.getTime()) / (1000 * 60 * 60 * 24));
+      const expiresAt = new Date(createdAtDate);
+      expiresAt.setDate(expiresAt.getDate() + EXPIRY_DAYS);
+
+      return {
+        ...record,
+        ageInDays,
+        expiresAt,
+      };
+    });
+
+    return res.status(200).send({
+      success: true,
+      message: "Disposed history fetched successfully",
+      disposedHistory: normalizedHistory,
+      expiryDays: EXPIRY_DAYS,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({
+      success: false,
+      message: "Error in disposed history API",
+      error,
+    });
+  }
+};
+
 module.exports = {
   createInventoryController,
   getInventoryController,
@@ -391,4 +627,7 @@ module.exports = {
   getOrgnaisationForHospitalController,
   getInventoryHospitalController,
   getRecentInventoryController,
+  getExpiredBloodController,
+  markBloodDisposedController,
+  getDisposedHistoryController,
 };

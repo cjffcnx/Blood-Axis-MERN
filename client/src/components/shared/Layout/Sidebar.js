@@ -58,6 +58,13 @@ const Sidebar = () => {
                 <Link to="/forecast">Forecast</Link>
               </div>
               <div
+                className={`menu-item ${location.pathname === "/expired-blood" && "active"
+                  }`}
+              >
+                <i className="fa-solid fa-clock-rotate-left"></i>
+                <Link to="/expired-blood">Expired Blood</Link>
+              </div>
+              <div
                 className={`menu-item ${location.pathname === "/request-user" && "active"
                   }`}
               >
@@ -144,6 +151,13 @@ const Sidebar = () => {
               >
                 <i className="fa-solid fa-file-medical"></i>
                 <Link to="/org-requests">Blood Requests</Link>
+              </div>
+              <div
+                className={`menu-item ${location.pathname === "/expired-blood" && "active"
+                  }`}
+              >
+                <i className="fa-solid fa-clock-rotate-left"></i>
+                <Link to="/expired-blood">Expired Blood</Link>
               </div>
             </>
           )}

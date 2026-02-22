@@ -32,7 +32,7 @@ const donorInterestSchema = new mongoose.Schema(
         },
         status: {
             type: String,
-            enum: ["pending", "contacted", "scheduled", "completed", "cancelled"],
+            enum: ["pending", "contacted", "scheduled", "completed", "cancelled", "expired"],
             default: "pending",
         },
     },

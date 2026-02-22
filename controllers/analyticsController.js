@@ -1,51 +1,116 @@
 const inventoryModel = require("../models/inventoryModel");
 const mongoose = require("mongoose");
+const userModel = require("../models/userModel");
+
+const EXPIRY_DAYS = 42;
+
+const getExpiryCutoffDate = () => {
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - EXPIRY_DAYS);
+  return cutoffDate;
+};
 
 //GET BLOOD GROUP DATA
 const bloodGroupDetailsContoller = async (req, res) => {
   try {
     const bloodGroups = ["O+", "O-", "AB+", "AB-", "A+", "A-", "B+", "B-"];
-    const organisation = new mongoose.Types.ObjectId(req.body.userId);
+    const userId = req.body.userId;
+    const user = await userModel.findById(userId).select("role");
+    const expiryCutoffDate = getExpiryCutoffDate();
 
-    // Optimized Aggregation: One query instead of loop
-    const stats = await inventoryModel.aggregate([
-      {
-        $match: {
-          organisation,
-          inventoryType: { $in: ["in", "out"] },
-        },
-      },
-      {
-        $group: {
-          _id: {
-            bloodGroup: "$bloodGroup",
-            type: "$inventoryType",
+    if (!user || !["organisation", "hospital"].includes(user.role)) {
+      return res.status(403).send({
+        success: false,
+        message: "Analytics is available only for organisation and hospital",
+      });
+    }
+
+    let bloodGroupData = [];
+
+    if (user.role === "organisation") {
+      const organisation = new mongoose.Types.ObjectId(userId);
+
+      const inStats = await inventoryModel.aggregate([
+        {
+          $match: {
+            organisation,
+            inventoryType: "in",
+            createdAt: { $gte: expiryCutoffDate },
+            isDisposed: { $ne: true },
+            isMarkedExpired: { $ne: true },
           },
-          total: { $sum: "$quantity" },
         },
-      },
-    ]);
+        {
+          $group: {
+            _id: "$bloodGroup",
+            total: { $sum: "$quantity" },
+          },
+        },
+      ]);
 
-    // Map result to simpler structure
-    const bloodGroupData = bloodGroups.map((bloodGroup) => {
-      const inStat = stats.find(
-        (s) => s._id.bloodGroup === bloodGroup && s._id.type === "in"
-      );
-      const outStat = stats.find(
-        (s) => s._id.bloodGroup === bloodGroup && s._id.type === "out"
-      );
+      const outStats = await inventoryModel.aggregate([
+        {
+          $match: {
+            organisation,
+            inventoryType: "out",
+          },
+        },
+        {
+          $group: {
+            _id: "$bloodGroup",
+            total: { $sum: "$quantity" },
+          },
+        },
+      ]);
 
-      const totalIn = inStat ? inStat.total : 0;
-      const totalOut = outStat ? outStat.total : 0;
-      const availabeBlood = totalIn - totalOut;
+      bloodGroupData = bloodGroups.map((bloodGroup) => {
+        const inStat = inStats.find((s) => s._id === bloodGroup);
+        const outStat = outStats.find((s) => s._id === bloodGroup);
 
-      return {
-        bloodGroup,
-        totalIn,
-        totalOut,
-        availabeBlood,
-      };
-    });
+        const totalIn = inStat ? inStat.total : 0;
+        const totalOut = outStat ? outStat.total : 0;
+        const availabeBlood = Math.max(totalIn - totalOut, 0);
+
+        return {
+          bloodGroup,
+          totalIn,
+          totalOut,
+          availabeBlood,
+        };
+      });
+    } else {
+      const hospital = new mongoose.Types.ObjectId(userId);
+
+      const receivedStats = await inventoryModel.aggregate([
+        {
+          $match: {
+            hospital,
+            inventoryType: "out",
+            createdAt: { $gte: expiryCutoffDate },
+            isDisposed: { $ne: true },
+            isMarkedExpired: { $ne: true },
+          },
+        },
+        {
+          $group: {
+            _id: "$bloodGroup",
+            total: { $sum: "$quantity" },
+          },
+        },
+      ]);
+
+      bloodGroupData = bloodGroups.map((bloodGroup) => {
+        const received = receivedStats.find((s) => s._id === bloodGroup);
+        const totalIn = received ? received.total : 0;
+
+        return {
+          bloodGroup,
+          totalIn,
+          totalOut: 0,
+          availabeBlood: totalIn,
+        };
+      });
+    }
 
     return res.status(200).send({
       success: true,

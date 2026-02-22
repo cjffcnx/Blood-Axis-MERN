@@ -10,7 +10,7 @@ const inventorySchema = new mongoose.Schema(
     bloodGroup: {
       type: String,
       required: [true, "blood group is require"],
-      enum: ["O+", "O-", "AB+", "AB-", "A+", "A-", "B+", "B-"],
+      enum: ["O+", "O-", "AB+", "AB-", "A+", "A-", "B+", "B-", "Unknown"],
     },
     quantity: {
       type: Number,
@@ -38,6 +38,37 @@ const inventorySchema = new mongoose.Schema(
       required: function () {
         return this.inventoryType === "in";
       },
+    },
+    isDisposed: {
+      type: Boolean,
+      default: false,
+    },
+    disposedAt: {
+      type: Date,
+      default: undefined,
+    },
+    disposalMethod: {
+      type: String,
+      enum: ["incineration", "biohazard", "autoclave", "chemical", "other"],
+      default: undefined,
+    },
+    isMarkedExpired: {
+      type: Boolean,
+      default: false,
+    },
+    expiredAt: {
+      type: Date,
+      default: undefined,
+    },
+    expiryReason: {
+      type: String,
+      trim: true,
+      default: undefined,
+    },
+    expiredFromInterest: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "donorInterests",
+      default: undefined,
     },
   },
   { timestamps: true }

@@ -94,30 +94,26 @@ const validateBloodRequestController = async (req, res) => {
             const availabilityMap = await getAvailabilityMap(bloodGroup);
             availabilityMap.delete(hospitalId.toString());
 
-            const candidateIds = Array.from(availabilityMap.keys());
-            if (candidateIds.length) {
-                const candidates = await userModel
-                    .find({
-                        _id: { $in: candidateIds },
-                        role: { $in: ["hospital", "organisation"] },
-                    })
-                    .select("hospitalName organisationName name role address phone latitude longitude")
-                    .lean();
+            const candidates = await userModel
+                .find({
+                    role: { $in: ["hospital", "organisation"] },
+                    _id: { $ne: hospitalId },
+                })
+                .select("hospitalName organisationName name role address phone latitude longitude")
+                .lean();
 
-                alternatives = candidates
-                    .map((candidate) => ({
-                        id: candidate._id,
-                        name: candidate.hospitalName || candidate.organisationName || candidate.name,
-                        role: candidate.role,
-                        address: candidate.address,
-                        phone: candidate.phone,
-                        latitude: candidate.latitude,
-                        longitude: candidate.longitude,
-                        availableUnits: availabilityMap.get(candidate._id.toString()) || 0,
-                    }))
-                    .filter((candidate) => candidate.availableUnits > 0)
-                    .sort((a, b) => b.availableUnits - a.availableUnits);
-            }
+            alternatives = candidates
+                .map((candidate) => ({
+                    id: candidate._id.toString(),
+                    name: candidate.hospitalName || candidate.organisationName || candidate.name,
+                    role: candidate.role,
+                    address: candidate.address,
+                    phone: candidate.phone,
+                    latitude: Number.isFinite(Number(candidate.latitude)) ? Number(candidate.latitude) : null,
+                    longitude: Number.isFinite(Number(candidate.longitude)) ? Number(candidate.longitude) : null,
+                    availableUnits: availabilityMap.get(candidate._id.toString()) || 0,
+                }))
+                .sort((a, b) => b.availableUnits - a.availableUnits);
         }
 
         return res.status(200).send({

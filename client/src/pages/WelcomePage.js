@@ -996,15 +996,15 @@ const WelcomePage = () => {
     const enrichAlternatives = (alternatives, location) => {
         if (!location) return alternatives;
         const enriched = alternatives.map((alternative) => {
-            if (
-                typeof alternative.latitude === "number" &&
-                typeof alternative.longitude === "number"
-            ) {
+            const latitude = Number(alternative.latitude);
+            const longitude = Number(alternative.longitude);
+
+            if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
                 const distanceKm = haversineDistanceKm(
                     location.lat,
                     location.lng,
-                    alternative.latitude,
-                    alternative.longitude
+                    latitude,
+                    longitude
                 );
                 return { ...alternative, distanceKm };
             }
@@ -1169,7 +1169,7 @@ const WelcomePage = () => {
             }
             const alternatives = stockResult.alternatives || stockCheck.alternatives;
             if (stockResult.hasStock === false && !selectedAlternative) {
-                toast.error("Selected hospital has no stock. Please choose an organization with stock.");
+                toast.error("Selected hospital has no stock. Please choose a hospital or organization to continue.");
                 return;
             }
 
@@ -1246,7 +1246,7 @@ const WelcomePage = () => {
         }
         const alternatives = stockResult.alternatives || stockCheck.alternatives;
         if (stockResult.hasStock === false && !selectedAlternative) {
-            toast.error("Selected hospital has no stock. Please choose an organization with stock.");
+            toast.error("Selected hospital has no stock. Please choose a hospital or organization to continue.");
             return;
         }
 
@@ -1690,13 +1690,13 @@ const WelcomePage = () => {
                                 {requiresAlternative && (
                                     <Grid item xs={12} sm={6}>
                                         <FormControl fullWidth required error={!selectedAlternative}>
-                                            <InputLabel>Select Organization</InputLabel>
+                                            <InputLabel>Select Hospital / Organization</InputLabel>
                                             <Select
                                                 value={selectedAlternative}
-                                                label="Select Organization"
+                                                label="Select Hospital / Organization"
                                                 onChange={(e) => setSelectedAlternative(e.target.value)}
                                             >
-                                                <MenuItem value="">Select organization with stock</MenuItem>
+                                                <MenuItem value="">Select hospital or organization</MenuItem>
                                                 {stockCheck.alternatives.length === 0 && (
                                                     <MenuItem value="" disabled>
                                                         No alternatives available
@@ -1712,7 +1712,7 @@ const WelcomePage = () => {
                                                 ))}
                                             </Select>
                                             {!selectedAlternative && (
-                                                <FormHelperText>Select an organization to continue.</FormHelperText>
+                                                <FormHelperText>Select a hospital or organization to continue.</FormHelperText>
                                             )}
                                         </FormControl>
                                     </Grid>

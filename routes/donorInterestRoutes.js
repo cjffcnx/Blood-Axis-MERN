@@ -5,6 +5,7 @@ const {
     getInterestedDonors,
     getDonorInterestHistory,
     updateInterestStatus,
+    markInterestAsExpired,
 } = require("../controllers/donorInterestController");
 
 const router = express.Router();
@@ -20,5 +21,8 @@ router.get("/donor/history", authMiddelware, getDonorInterestHistory);
 
 // Update interest status
 router.put("/update-status", authMiddelware, updateInterestStatus);
+
+// Mark donor interest as expired and push to expired blood
+router.post("/mark-expired", authMiddelware, markInterestAsExpired);
 
 module.exports = router;

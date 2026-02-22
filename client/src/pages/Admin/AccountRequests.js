@@ -8,6 +8,10 @@ const AccountRequests = () => {
     const [data, setData] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [appliedSearch, setAppliedSearch] = useState("");
+    const [showRejectModal, setShowRejectModal] = useState(false);
+    const [rejectingRequestId, setRejectingRequestId] = useState(null);
+    const [rejectForm, setRejectForm] = useState({ subject: "", reason: "" });
+    const [submittingReject, setSubmittingReject] = useState(false);
 
     const getRequests = async (search = "") => {
         try {
@@ -47,9 +51,7 @@ const AccountRequests = () => {
             );
             if (!answer) return;
 
-            const { data } = await API.put(`/account-requests/${id}/status`, {
-                status,
-            });
+            const { data } = await API.put(`/account-requests/${id}/status`, { status });
             if (data?.success) {
                 toast.success(data.message);
                 getRequests();
@@ -59,6 +61,65 @@ const AccountRequests = () => {
         } catch (error) {
             console.log(error);
             toast.error("Something went wrong");
+        }
+    };
+
+    const openRejectModal = (id) => {
+        setRejectingRequestId(id);
+        setRejectForm({ subject: "", reason: "" });
+        setShowRejectModal(true);
+    };
+
+    const closeRejectModal = () => {
+        if (submittingReject) return;
+        setShowRejectModal(false);
+        setRejectingRequestId(null);
+        setRejectForm({ subject: "", reason: "" });
+    };
+
+    const handleRejectInput = (event) => {
+        const { name, value } = event.target;
+        setRejectForm((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const submitRejection = async () => {
+        try {
+            if (!rejectingRequestId) return;
+
+            const subject = rejectForm.subject.trim();
+            const reason = rejectForm.reason.trim();
+
+            if (!subject) {
+                toast.error("Subject is required");
+                return;
+            }
+
+            if (!reason) {
+                toast.error("Reason is required");
+                return;
+            }
+
+            setSubmittingReject(true);
+
+            const { data } = await API.put(`/account-requests/${rejectingRequestId}/status`, {
+                status: "rejected",
+                subject,
+                reason,
+                adminComments: reason,
+            });
+
+            if (data?.success) {
+                toast.success(data.message);
+                closeRejectModal();
+                getRequests();
+            } else {
+                toast.error(data?.message || "Failed to reject request");
+            }
+        } catch (error) {
+            console.log(error);
+            toast.error("Something went wrong");
+        } finally {
+            setSubmittingReject(false);
         }
     };
 
@@ -124,7 +185,7 @@ const AccountRequests = () => {
                                     </button>
                                     <button
                                         className="btn btn-danger btn-sm"
-                                        onClick={() => handleStatus(record._id, "rejected")}
+                                        onClick={() => openRejectModal(record._id)}
                                     >
                                         Reject
                                     </button>
@@ -138,6 +199,74 @@ const AccountRequests = () => {
                         )}
                     </tbody>
                 </table>
+
+                {showRejectModal && (
+                    <div className="modal show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+                        <div className="modal-dialog modal-dialog-centered">
+                            <div className="modal-content">
+                                <div className="modal-header">
+                                    <h5 className="modal-title">Reject Account Request</h5>
+                                    <button
+                                        type="button"
+                                        className="btn-close"
+                                        onClick={closeRejectModal}
+                                        disabled={submittingReject}
+                                    ></button>
+                                </div>
+                                <div className="modal-body">
+                                    <div className="mb-3">
+                                        <label htmlFor="reject-subject" className="form-label">
+                                            Subject <span className="text-danger">*</span>
+                                        </label>
+                                        <input
+                                            id="reject-subject"
+                                            name="subject"
+                                            type="text"
+                                            className="form-control"
+                                            placeholder="Enter rejection email subject"
+                                            value={rejectForm.subject}
+                                            onChange={handleRejectInput}
+                                            disabled={submittingReject}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="reject-reason" className="form-label">
+                                            Reason <span className="text-danger">*</span>
+                                        </label>
+                                        <textarea
+                                            id="reject-reason"
+                                            name="reason"
+                                            className="form-control"
+                                            rows="5"
+                                            placeholder="Enter rejection reason"
+                                            value={rejectForm.reason}
+                                            onChange={handleRejectInput}
+                                            disabled={submittingReject}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="modal-footer">
+                                    <button
+                                        type="button"
+                                        className="btn btn-secondary"
+                                        onClick={closeRejectModal}
+                                        disabled={submittingReject}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="btn btn-danger"
+                                        onClick={submitRejection}
+                                        disabled={submittingReject}
+                                    >
+                                        {submittingReject ? "Submitting..." : "Reject Request"}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </Layout>
     );

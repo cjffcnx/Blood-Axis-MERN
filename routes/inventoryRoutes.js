@@ -11,6 +11,9 @@ const {
   getOrgnaisationForHospitalController,
   getInventoryHospitalController,
   getRecentInventoryController,
+  getExpiredBloodController,
+  markBloodDisposedController,
+  getDisposedHistoryController,
 } = require("../controllers/inventoryController");
 
 const router = express.Router();
@@ -56,5 +59,9 @@ router.get(
   authMiddelware,
   getOrgnaisationForHospitalController
 );
+
+router.get("/expired-blood", authMiddelware, getExpiredBloodController);
+router.get("/disposed-history", authMiddelware, getDisposedHistoryController);
+router.patch("/mark-disposed", authMiddelware, markBloodDisposedController);
 
 module.exports = router;

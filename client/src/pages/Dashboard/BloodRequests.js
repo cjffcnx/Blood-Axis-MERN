@@ -222,7 +222,7 @@ const BloodRequests = () => {
                             <th scope="col">Date</th>
                             <th scope="col">Status</th>
                             <th scope="col">Paid</th>
-                            <th scope="col">Document</th>
+                            {user?.role === "hospital" && <th scope="col">Document</th>}
                             {(user?.role === "hospital" || user?.role === "organisation") && (
                                 <th scope="col">Action</th>
                             )}
@@ -273,18 +273,20 @@ const BloodRequests = () => {
                                             {record.paymentStatus || "non-paid"}
                                         </span>
                                     </td>
-                                    <td>
-                                        {record.attachment ? (
-                                            <a
-                                                href={`http://localhost:5000${record.attachment}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="btn btn-sm btn-info text-white"
-                                            >
-                                                View Doc
-                                            </a>
-                                        ) : "N/A"}
-                                    </td>
+                                    {user?.role === "hospital" && (
+                                        <td>
+                                            {record.attachment ? (
+                                                <a
+                                                    href={`http://localhost:5000${record.attachment}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="btn btn-sm btn-info text-white"
+                                                >
+                                                    View Doc
+                                                </a>
+                                            ) : "N/A"}
+                                        </td>
+                                    )}
                                     {user?.role === "organisation" && (
                                         <td>
                                             <button
@@ -325,7 +327,7 @@ const BloodRequests = () => {
                             ))
                         ) : (
                             <tr>
-                                <td colSpan={user?.role === "hospital" || user?.role === "organisation" ? 9 : 8} className="text-center text-muted py-4">
+                                <td colSpan={user?.role === "hospital" ? 9 : user?.role === "organisation" ? 8 : 7} className="text-center text-muted py-4">
                                     {searchTerm ? (
                                         <>
                                             <i className="fa-solid fa-search me-2"></i>

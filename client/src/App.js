@@ -42,6 +42,7 @@ import SearchHospitals from "./pages/Dashboard/SearchHospitals";
 import BloodPaymentRequest from "./pages/Dashboard/BloodPaymentRequest";
 import ESewaSuccess from "./pages/Dashboard/ESewaSuccess";
 import BloodForecast from "./pages/Dashboard/BloodForecast";
+import ExpiredBlood from "./pages/Dashboard/ExpiredBlood";
 
 const queryClient = new QueryClient();
 
@@ -153,6 +154,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <BloodForecast />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/expired-blood"
+            element={
+              <ProtectedRoute>
+                <ExpiredBlood />
               </ProtectedRoute>
             }
           />

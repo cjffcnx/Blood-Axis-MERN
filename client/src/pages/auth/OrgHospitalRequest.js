@@ -7,6 +7,42 @@ import Spinner from "../../components/shared/Spinner";
 import { toast } from "react-toastify";
 import { isValidEmail, isValidPassword, getPasswordError, isValidPhone } from "../../utils/validation";
 
+const extractCoordinatesFromMapLink = (value) => {
+    if (!value || typeof value !== "string") return null;
+    const input = value.trim();
+
+    const coordinatePatterns = [
+        /@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/,
+        /!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/,
+        /[?&](?:q|query|ll)=(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/,
+        /^(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)$/,
+    ];
+
+    for (const pattern of coordinatePatterns) {
+        const match = input.match(pattern);
+        if (!match) continue;
+
+        const parsedLatitude = Number(match[1]);
+        const parsedLongitude = Number(match[2]);
+
+        if (
+            Number.isFinite(parsedLatitude) &&
+            Number.isFinite(parsedLongitude) &&
+            parsedLatitude >= -90 &&
+            parsedLatitude <= 90 &&
+            parsedLongitude >= -180 &&
+            parsedLongitude <= 180
+        ) {
+            return {
+                latitude: parsedLatitude,
+                longitude: parsedLongitude,
+            };
+        }
+    }
+
+    return null;
+};
+
 const OrgHospitalRequest = () => {
     const [role, setRole] = useState("organisation");
     const [name, setName] = useState("");
@@ -17,6 +53,7 @@ const OrgHospitalRequest = () => {
     const [website, setWebsite] = useState("");
     const [organisationName, setOrganisationName] = useState("");
     const [hospitalName, setHospitalName] = useState("");
+    const [mapLink, setMapLink] = useState("");
     const [latitude, setLatitude] = useState("");
     const [longitude, setLongitude] = useState("");
     const [proofFile, setProofFile] = useState(null);
@@ -24,6 +61,7 @@ const OrgHospitalRequest = () => {
     const [emailError, setEmailError] = useState("");
     const [passwordError, setPasswordError] = useState("");
     const [phoneError, setPhoneError] = useState("");
+    const [mapLinkError, setMapLinkError] = useState("");
 
     const navigate = useNavigate();
 
@@ -53,6 +91,26 @@ const OrgHospitalRequest = () => {
         setProofFile(e.target.files[0]);
     };
 
+    const applyCoordinatesFromLink = (value) => {
+        const coords = extractCoordinatesFromMapLink(value);
+        if (!coords) {
+            setLatitude("");
+            setLongitude("");
+            setMapLinkError("Please provide a valid Google Maps link containing coordinates");
+            return null;
+        }
+
+        setLatitude(String(coords.latitude));
+        setLongitude(String(coords.longitude));
+        setMapLinkError("");
+        return coords;
+    };
+
+    const handleMapLinkBlur = () => {
+        if (!mapLink.trim()) return;
+        applyCoordinatesFromLink(mapLink);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -77,8 +135,20 @@ const OrgHospitalRequest = () => {
                 return;
             }
 
-            const parsedLatitude = Number(latitude);
-            const parsedLongitude = Number(longitude);
+            if (!mapLink.trim()) {
+                setMapLinkError("Google Maps link is required");
+                toast.error("Google Maps link is required");
+                return;
+            }
+
+            const parsedCoords = applyCoordinatesFromLink(mapLink);
+            if (!parsedCoords) {
+                toast.error("Invalid Google Maps link. Please use a link that includes coordinates");
+                return;
+            }
+
+            const parsedLatitude = Number(parsedCoords.latitude);
+            const parsedLongitude = Number(parsedCoords.longitude);
             if (!Number.isFinite(parsedLatitude) || parsedLatitude < -90 || parsedLatitude > 90) {
                 toast.error("Latitude must be between -90 and 90");
                 return;
@@ -251,7 +321,34 @@ const OrgHospitalRequest = () => {
 
                                 <div className="mb-3">
                                     <label className="form-label">
-                                        Latitude
+                                        Google Maps Link
+                                        <span style={{ color: 'red', marginLeft: '4px' }}>*</span>
+                                    </label>
+                                    <input
+                                        type="url"
+                                        className={`form-control ${mapLinkError ? 'is-invalid' : ''}`}
+                                        value={mapLink}
+                                        onChange={(e) => {
+                                            setMapLink(e.target.value);
+                                            setMapLinkError("");
+                                        }}
+                                        onBlur={handleMapLinkBlur}
+                                        placeholder="Paste Google Maps location link"
+                                        required
+                                    />
+                                    {mapLinkError && (
+                                        <div className="invalid-feedback" style={{ display: 'block' }}>
+                                            {mapLinkError}
+                                        </div>
+                                    )}
+                                    <small className="text-muted">
+                                        Paste a Google Maps URL. Latitude and longitude will be detected automatically.
+                                    </small>
+                                </div>
+
+                                <div className="mb-3">
+                                    <label className="form-label">
+                                        Latitude (Auto)
                                         <span style={{ color: 'red', marginLeft: '4px' }}>*</span>
                                     </label>
                                     <input
@@ -259,14 +356,14 @@ const OrgHospitalRequest = () => {
                                         step="any"
                                         className="form-control"
                                         value={latitude}
-                                        onChange={(e) => setLatitude(e.target.value)}
+                                        readOnly
                                         required
                                     />
                                 </div>
 
                                 <div className="mb-3">
                                     <label className="form-label">
-                                        Longitude
+                                        Longitude (Auto)
                                         <span style={{ color: 'red', marginLeft: '4px' }}>*</span>
                                     </label>
                                     <input
@@ -274,7 +371,7 @@ const OrgHospitalRequest = () => {
                                         step="any"
                                         className="form-control"
                                         value={longitude}
-                                        onChange={(e) => setLongitude(e.target.value)}
+                                        readOnly
                                         required
                                     />
                                 </div>

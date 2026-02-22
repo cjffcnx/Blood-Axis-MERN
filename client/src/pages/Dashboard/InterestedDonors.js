@@ -3,6 +3,7 @@ import Layout from "./../../components/shared/Layout/Layout";
 import moment from "moment";
 import API from "../../services/API";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 import {
     Table,
     TableBody,
@@ -22,6 +23,7 @@ import {
 } from "@mui/material";
 
 const InterestedDonors = () => {
+    const navigate = useNavigate();
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showEmailModal, setShowEmailModal] = useState(false);
@@ -61,6 +63,25 @@ const InterestedDonors = () => {
         } catch (error) {
             console.log(error);
             alert("Error updating status");
+        }
+    };
+
+    const handleMarkExpired = async (record) => {
+        try {
+            const response = await API.post("/donor-interest/mark-expired", {
+                interestId: record._id,
+                quantity: 450,
+                reason: "Infectious or unsuitable blood",
+            });
+
+            if (response.data?.success) {
+                toast.success("Moved to expired blood list");
+                getInterestedDonors(appliedSearch);
+                navigate("/expired-blood");
+            }
+        } catch (error) {
+            console.log(error);
+            toast.error(error?.response?.data?.message || "Error moving record to expired blood");
         }
     };
 
@@ -145,7 +166,8 @@ const InterestedDonors = () => {
             contacted: "info",
             scheduled: "primary",
             completed: "success",
-            cancelled: "error"
+            cancelled: "error",
+            expired: "default",
         };
         return colors[status] || "default";
     };
@@ -244,6 +266,7 @@ const InterestedDonors = () => {
                                                     <MenuItem value="scheduled">Scheduled</MenuItem>
                                                     <MenuItem value="completed">Completed</MenuItem>
                                                     <MenuItem value="cancelled">Cancelled</MenuItem>
+                                                    <MenuItem value="expired">Expired</MenuItem>
                                                 </Select>
                                             </FormControl>
                                         </TableCell>
@@ -251,20 +274,31 @@ const InterestedDonors = () => {
                                             {moment(record.createdAt).format("DD/MM/YYYY hh:mm A")}
                                         </TableCell>
                                         <TableCell>
-                                            <Button
-                                                variant="contained"
-                                                size="small"
-                                                sx={{
-                                                    backgroundColor: "#d32f2f",
-                                                    "&:hover": {
-                                                        backgroundColor: "#b71c1c",
-                                                    },
-                                                }}
-                                                onClick={() => openEmailModal(record)}
-                                            >
-                                                <i className="fa-solid fa-envelope" style={{ marginRight: "5px" }}></i>
-                                                Email
-                                            </Button>
+                                            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                                                <Button
+                                                    variant="contained"
+                                                    size="small"
+                                                    sx={{
+                                                        backgroundColor: "#d32f2f",
+                                                        "&:hover": {
+                                                            backgroundColor: "#b71c1c",
+                                                        },
+                                                    }}
+                                                    onClick={() => openEmailModal(record)}
+                                                >
+                                                    <i className="fa-solid fa-envelope" style={{ marginRight: "5px" }}></i>
+                                                    Email
+                                                </Button>
+                                                <Button
+                                                    variant="outlined"
+                                                    size="small"
+                                                    color="warning"
+                                                    disabled={record.status === "expired"}
+                                                    onClick={() => handleMarkExpired(record)}
+                                                >
+                                                    Expired
+                                                </Button>
+                                            </Box>
                                         </TableCell>
                                     </TableRow>
                                 ))}

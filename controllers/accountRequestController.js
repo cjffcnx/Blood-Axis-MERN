@@ -2,6 +2,7 @@ const accountRequestModel = require("../models/accountRequestModel");
 const userModel = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 const { isValidPhone } = require("../utils/validation");
+const { sendEmail, isEmailConfigured } = require("../utils/emailService");
 
 // Create a new account request
 const createAccountRequestController = async (req, res) => {
@@ -130,8 +131,15 @@ const getAccountRequestsController = async (req, res) => {
 // Update request status (Approve/Reject)
 const updateRequestStatusController = async (req, res) => {
     try {
-        const { status, adminComments } = req.body;
+        const { status, adminComments, subject, reason } = req.body;
         const { id } = req.params;
+
+        if (!["approved", "rejected"].includes(status)) {
+            return res.status(400).send({
+                success: false,
+                message: "Invalid status value",
+            });
+        }
 
         const request = await accountRequestModel.findById(id);
         if (!request) {
@@ -159,8 +167,50 @@ const updateRequestStatusController = async (req, res) => {
             await newUser.save();
         }
 
+        if (status === "rejected") {
+            const trimmedSubject = typeof subject === "string" ? subject.trim() : "";
+            const trimmedReason = typeof reason === "string" ? reason.trim() : "";
+
+            if (!trimmedSubject) {
+                return res.status(400).send({
+                    success: false,
+                    message: "Subject is required for rejection email",
+                });
+            }
+
+            if (!trimmedReason) {
+                return res.status(400).send({
+                    success: false,
+                    message: "Reason is required for rejection email",
+                });
+            }
+
+            if (!isEmailConfigured()) {
+                return res.status(500).send({
+                    success: false,
+                    message: "SMTP is not configured. Unable to send rejection email",
+                });
+            }
+
+            const emailResult = await sendEmail({
+                to: request.email,
+                subject: trimmedSubject,
+                text: `Hello ${request.name || "there"},\n\nYour account request has been rejected.\n\nReason:\n${trimmedReason}\n\nIf you have questions, please contact support.`,
+                html: `<p>Hello ${request.name || "there"},</p><p>Your account request has been rejected.</p><p><strong>Reason:</strong><br/>${trimmedReason}</p><p>If you have questions, please contact support.</p>`,
+            });
+
+            if (!emailResult?.success) {
+                return res.status(500).send({
+                    success: false,
+                    message: "Failed to send rejection email",
+                });
+            }
+        }
+
         request.status = status;
-        request.adminComments = adminComments;
+        request.adminComments = status === "rejected"
+            ? (typeof reason === "string" ? reason.trim() : adminComments)
+            : adminComments;
         await request.save();
 
         res.status(200).send({
