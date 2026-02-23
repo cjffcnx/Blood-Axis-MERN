@@ -2,64 +2,97 @@ const mongoose = require("mongoose");
 const inventoryModel = require("../models/inventoryModel");
 const userModel = require("../models/userModel");
 
-const getAvailableUnits = async (organisationId, bloodGroup) => {
-    const organisation = new mongoose.Types.ObjectId(organisationId);
-    const totals = await inventoryModel.aggregate([
-        {
-            $match: {
-                organisation,
-                bloodGroup,
-            },
-        },
-        {
-            $group: {
-                _id: "$inventoryType",
-                total: { $sum: "$quantity" },
-            },
-        },
-    ]);
+const EXPIRY_DAYS = 42;
+const ML_PER_UNIT = 350;
 
-    const totalIn = totals.find((row) => row._id === "in")?.total || 0;
-    const totalOut = totals.find((row) => row._id === "out")?.total || 0;
-    return totalIn - totalOut;
+const getExpiryCutoffDate = () => {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - EXPIRY_DAYS);
+    return cutoffDate;
 };
 
-const getAvailabilityMap = async (bloodGroup) => {
-    const totals = await inventoryModel.aggregate([
+const getProviderAvailabilityMap = async (bloodGroup) => {
+    const expiryCutoffDate = getExpiryCutoffDate();
+
+    const organisationInStats = await inventoryModel.aggregate([
         {
             $match: {
                 bloodGroup,
+                inventoryType: "in",
+                createdAt: { $gte: expiryCutoffDate },
+                isDisposed: { $ne: true },
+                isMarkedExpired: { $ne: true },
             },
         },
         {
             $group: {
-                _id: {
-                    organisation: "$organisation",
-                    inventoryType: "$inventoryType",
-                },
+                _id: "$organisation",
                 total: { $sum: "$quantity" },
             },
         },
     ]);
 
-    const availabilityMap = new Map();
-    totals.forEach((row) => {
-        const organisationId = row._id.organisation.toString();
-        const current = availabilityMap.get(organisationId) || { in: 0, out: 0 };
-        if (row._id.inventoryType === "in") {
-            current.in = row.total;
-        } else {
-            current.out = row.total;
-        }
-        availabilityMap.set(organisationId, current);
-    });
+    const organisationOutStats = await inventoryModel.aggregate([
+        {
+            $match: {
+                bloodGroup,
+                inventoryType: "out",
+            },
+        },
+        {
+            $group: {
+                _id: "$organisation",
+                total: { $sum: "$quantity" },
+            },
+        },
+    ]);
+
+    const hospitalReceivedStats = await inventoryModel.aggregate([
+        {
+            $match: {
+                bloodGroup,
+                inventoryType: "out",
+                createdAt: { $gte: expiryCutoffDate },
+                isDisposed: { $ne: true },
+                isMarkedExpired: { $ne: true },
+            },
+        },
+        {
+            $group: {
+                _id: "$hospital",
+                total: { $sum: "$quantity" },
+            },
+        },
+    ]);
+
+    const organisationInMap = new Map(
+        organisationInStats.map((row) => [row._id?.toString(), row.total || 0])
+    );
+    const organisationOutMap = new Map(
+        organisationOutStats.map((row) => [row._id?.toString(), row.total || 0])
+    );
+    const hospitalInMap = new Map(
+        hospitalReceivedStats.map((row) => [row._id?.toString(), row.total || 0])
+    );
 
     const result = new Map();
-    availabilityMap.forEach((value, key) => {
-        const availableUnits = value.in - value.out;
-        if (availableUnits > 0) {
-            result.set(key, availableUnits);
-        }
+
+    const organisationIds = new Set([
+        ...organisationInMap.keys(),
+        ...organisationOutMap.keys(),
+    ]);
+
+    organisationIds.forEach((id) => {
+        if (!id) return;
+        const totalIn = organisationInMap.get(id) || 0;
+        const totalOut = organisationOutMap.get(id) || 0;
+        const availableUnits = Math.max(totalIn - totalOut, 0);
+        result.set(id, availableUnits);
+    });
+
+    hospitalInMap.forEach((totalIn, id) => {
+        if (!id) return;
+        result.set(id, Math.max(totalIn, 0));
     });
 
     return result;
@@ -83,15 +116,24 @@ const validateBloodRequestController = async (req, res) => {
             });
         }
 
+        const provider = await userModel.findById(hospitalId).select("role").lean();
+        if (!provider || !["hospital", "organisation"].includes(provider.role)) {
+            return res.status(400).send({
+                success: false,
+                message: "Selected provider is invalid",
+            });
+        }
+
         const requestedUnits = Number(quantity);
         const requiredUnits = Number.isFinite(requestedUnits) && requestedUnits > 0 ? requestedUnits : 1;
+        const requiredMl = requiredUnits * ML_PER_UNIT;
 
-        const availableUnits = await getAvailableUnits(hospitalId, bloodGroup);
-        const hasStock = availableUnits >= requiredUnits;
+        const availabilityMap = await getProviderAvailabilityMap(bloodGroup);
+        const availableUnits = availabilityMap.get(hospitalId.toString()) || 0;
+        const hasStock = availableUnits >= requiredMl;
 
         let alternatives = [];
         if (!hasStock) {
-            const availabilityMap = await getAvailabilityMap(bloodGroup);
             availabilityMap.delete(hospitalId.toString());
 
             const candidates = await userModel
@@ -113,6 +155,7 @@ const validateBloodRequestController = async (req, res) => {
                     longitude: Number.isFinite(Number(candidate.longitude)) ? Number(candidate.longitude) : null,
                     availableUnits: availabilityMap.get(candidate._id.toString()) || 0,
                 }))
+                .filter((candidate) => candidate.availableUnits > 0)
                 .sort((a, b) => b.availableUnits - a.availableUnits);
         }
 
@@ -121,6 +164,8 @@ const validateBloodRequestController = async (req, res) => {
             hasStock,
             availableUnits,
             requiredUnits,
+            requiredMl,
+            mlPerUnit: ML_PER_UNIT,
             alternatives,
         });
     } catch (error) {

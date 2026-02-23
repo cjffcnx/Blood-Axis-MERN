@@ -771,6 +771,72 @@ const getOrganisationsController = async (req, res) => {
     }
 };
 
+// UPDATE UNITS USED (Hospital)
+const updateUnitsUsedController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { unitsUsed } = req.body;
+
+        const parsedUnitsUsed = Number(unitsUsed);
+        if (!Number.isFinite(parsedUnitsUsed) || parsedUnitsUsed < 0) {
+            return res.status(400).send({
+                success: false,
+                message: "Units used must be a non-negative number",
+            });
+        }
+
+        const user = await userModel.findById(req.body.userId).select("role");
+        if (!user || user.role !== "hospital") {
+            return res.status(403).send({
+                success: false,
+                message: "Only hospitals can update units used",
+            });
+        }
+
+        const request = await requestModel.findById(id);
+        if (!request) {
+            return res.status(404).send({
+                success: false,
+                message: "Request not found",
+            });
+        }
+
+        const userId = req.body.userId;
+        const isHospitalRequestOwner = request.hospital && request.hospital.toString() === userId;
+        const isAssignedPublicRequest = request.requestedHospital && request.requestedHospital.toString() === userId;
+
+        if (!isHospitalRequestOwner && !isAssignedPublicRequest) {
+            return res.status(403).send({
+                success: false,
+                message: "You are not allowed to update this request",
+            });
+        }
+
+        if (parsedUnitsUsed > request.quantity) {
+            return res.status(400).send({
+                success: false,
+                message: `Units used cannot exceed requested quantity (${request.quantity})`,
+            });
+        }
+
+        request.unitsUsed = parsedUnitsUsed;
+        await request.save();
+
+        return res.status(200).send({
+            success: true,
+            message: "Units used updated successfully",
+            request,
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).send({
+            success: false,
+            message: "Error updating units used",
+            error,
+        });
+    }
+};
+
 module.exports = {
     createRequestController,
     uploadRequestAttachmentController,
@@ -787,5 +853,6 @@ module.exports = {
     rejectRequestController,
     getOrganisationsController,
     updatePaymentStatusController,
-    updateRequestQuantityController
+    updateRequestQuantityController,
+    updateUnitsUsedController
 };

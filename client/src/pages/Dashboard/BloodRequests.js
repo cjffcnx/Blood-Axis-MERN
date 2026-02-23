@@ -12,8 +12,8 @@ const BloodRequests = () => {
     const [data, setData] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [filteredData, setFilteredData] = useState([]);
-    const [quantityEdits, setQuantityEdits] = useState({});
-    const [savingQuantityId, setSavingQuantityId] = useState(null);
+    const [unitsUsedEdits, setUnitsUsedEdits] = useState({});
+    const [savingUnitsUsedId, setSavingUnitsUsedId] = useState(null);
 
     //get requests based on role
     const getRequests = async () => {
@@ -44,11 +44,11 @@ const BloodRequests = () => {
     useEffect(() => {
         if (user?.role !== "hospital") return;
 
-        setQuantityEdits((prev) => {
+        setUnitsUsedEdits((prev) => {
             const next = { ...prev };
             data.forEach((record) => {
                 if (next[record._id] === undefined) {
-                    next[record._id] = record.quantity ?? "";
+                    next[record._id] = record.unitsUsed ?? 0;
                 }
             });
             return next;
@@ -117,37 +117,44 @@ const BloodRequests = () => {
         }
     };
 
-    const handleQuantityChange = (id, value) => {
-        setQuantityEdits((prev) => ({
+    const handleUnitsUsedChange = (id, value) => {
+        setUnitsUsedEdits((prev) => ({
             ...prev,
-            [id]: value,
+            [id]: Number(value),
         }));
     };
 
-    const handleUpdateQuantity = async (id) => {
+    const handleUpdateUnitsUsed = async (id) => {
         try {
-            const nextQuantity = Number(quantityEdits[id]);
-            if (!Number.isFinite(nextQuantity) || nextQuantity <= 0) {
-                toast.error("Quantity must be a positive number");
+            const unitsUsed = Number(unitsUsedEdits[id]);
+            const record = data.find(r => r._id === id);
+
+            if (!Number.isFinite(unitsUsed) || unitsUsed < 0) {
+                toast.error("Units used must be a non-negative number");
                 return;
             }
 
-            setSavingQuantityId(id);
-            const { data } = await API.put(`/request/update-quantity/${id}`, {
-                quantity: nextQuantity,
+            if (unitsUsed > record.quantity) {
+                toast.error(`Units used cannot exceed requested quantity (${record.quantity})`);
+                return;
+            }
+
+            setSavingUnitsUsedId(id);
+            const { data: responseData } = await API.put(`/request/update-units-used/${id}`, {
+                unitsUsed,
             });
 
-            if (data?.success) {
-                toast.success(data.message);
+            if (responseData?.success) {
+                toast.success(responseData.message);
                 getRequests();
             } else {
-                toast.error(data.message || "Unable to update quantity");
+                toast.error(responseData.message || "Unable to update units used");
             }
         } catch (error) {
             console.log(error);
             toast.error("Something went wrong");
         } finally {
-            setSavingQuantityId(null);
+            setSavingUnitsUsedId(null);
         }
     };
 
@@ -155,6 +162,9 @@ const BloodRequests = () => {
         const doc = new jsPDF();
         const quantityValue = record.quantity ?? 0;
         const paymentAmount = record.paymentAmount || 0;
+        const unitsUsed = record.unitsUsed || 0;
+        const amountUsed = unitsUsed * 400;
+        const finalAmount = paymentAmount - amountUsed;
 
         doc.setFontSize(16);
         doc.text("Blood Request Bill", 20, 20);
@@ -166,10 +176,13 @@ const BloodRequests = () => {
             `Requester: ${record.hospital ? record.hospital.hospitalName : record.name}`,
             `Phone: ${record.hospital ? record.hospital.phone : record.phone}`,
             `Blood Group: ${record.bloodGroup || "N/A"}`,
-            `Quantity: ${quantityValue} Unit(s)`,
+            `Quantity Requested: ${quantityValue} Unit(s)`,
+            `Units Used: ${unitsUsed} Unit(s)`,
             `Status: ${record.status || "N/A"}`,
             `Payment Status: ${record.paymentStatus || "non-paid"}`,
             paymentAmount > 0 ? `Amount Paid: Rs ${paymentAmount}` : null,
+            unitsUsed > 0 ? `Amount Used: Rs ${amountUsed}` : null,
+            paymentAmount > 0 ? `Final Amount (Difference): Rs ${finalAmount}` : null,
         ].filter(Boolean);
 
         lines.forEach((line, index) => {
@@ -224,11 +237,17 @@ const BloodRequests = () => {
                             <th scope="col">Date</th>
                             <th scope="col">Status</th>
                             <th scope="col">Paid</th>
-                            <th scope="col">Amount</th>
-                            {user?.role === "hospital" && <th scope="col">Document</th>}
-                            {(user?.role === "hospital" || user?.role === "organisation") && (
-                                <th scope="col">Action</th>
+                            <th scope="col">Amount Paid</th>
+                            {user?.role === "hospital" && (
+                                <>
+                                    <th scope="col">Units Used</th>
+                                    <th scope="col">Amount Used</th>
+                                    <th scope="col">Final Amount</th>
+                                    <th scope="col">Document</th>
+                                </>
                             )}
+                            {user?.role === "organisation" && <th scope="col">Action</th>}
+                            {user?.role === "hospital" && <th scope="col">Action</th>}
                         </tr>
                     </thead>
                     <tbody>
@@ -240,31 +259,10 @@ const BloodRequests = () => {
                                     </td>
                                     <td>{record.bloodGroup}</td>
                                     <td>
-                                        {user?.role === "hospital" ? (
-                                            <div className="d-flex align-items-center gap-2">
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    className="form-control form-control-sm"
-                                                    style={{ maxWidth: "120px" }}
-                                                    value={quantityEdits[record._id] ?? ""}
-                                                    onChange={(e) => handleQuantityChange(record._id, e.target.value)}
-                                                />
-                                                <button
-                                                    className="btn btn-outline-primary btn-sm"
-                                                    onClick={() => handleUpdateQuantity(record._id)}
-                                                    disabled={
-                                                        savingQuantityId === record._id ||
-                                                        Number(quantityEdits[record._id]) === Number(record.quantity) ||
-                                                        !Number(quantityEdits[record._id])
-                                                    }
-                                                >
-                                                    {savingQuantityId === record._id ? "Saving..." : "Update"}
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            record.quantity ? `${record.quantity} ML` : "N/A"
-                                        )}
+                                        {user?.role === "hospital"
+                                            ? (record.quantity ? `${record.quantity} Units` : "N/A")
+                                            : (record.quantity ? `${record.quantity} ML` : "N/A")
+                                        }
                                     </td>
                                     <td>{record.hospital ? record.hospital.phone : record.phone}</td>
                                     <td>{moment(record.createdAt).format("DD/MM/YYYY hh:mm A")}</td>
@@ -282,18 +280,57 @@ const BloodRequests = () => {
                                             : "-"}
                                     </td>
                                     {user?.role === "hospital" && (
-                                        <td>
-                                            {record.attachment ? (
-                                                <a
-                                                    href={`http://localhost:5000${record.attachment}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="btn btn-sm btn-info text-white"
-                                                >
-                                                    View Doc
-                                                </a>
-                                            ) : "N/A"}
-                                        </td>
+                                        <>
+                                            <td>
+                                                <div className="d-flex align-items-center gap-2">
+                                                    <select
+                                                        className="form-select form-select-sm"
+                                                        style={{ maxWidth: "100px" }}
+                                                        value={unitsUsedEdits[record._id] ?? 0}
+                                                        onChange={(e) => handleUnitsUsedChange(record._id, e.target.value)}
+                                                        disabled={savingUnitsUsedId === record._id}
+                                                    >
+                                                        {Array.from({ length: (record.quantity || 0) + 1 }, (_, i) => (
+                                                            <option key={i} value={i}>{i}</option>
+                                                        ))}
+                                                    </select>
+                                                    <button
+                                                        className="btn btn-outline-primary btn-sm"
+                                                        onClick={() => handleUpdateUnitsUsed(record._id)}
+                                                        disabled={
+                                                            savingUnitsUsedId === record._id ||
+                                                            Number(unitsUsedEdits[record._id]) === Number(record.unitsUsed || 0)
+                                                        }
+                                                    >
+                                                        {savingUnitsUsedId === record._id ? "..." : "✓"}
+                                                    </button>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                {`Rs ${(unitsUsedEdits[record._id] || 0) * 400}`}
+                                            </td>
+                                            <td>
+                                                {(() => {
+                                                    const amountPaid = record.paymentAmount || 0;
+                                                    const amountUsed = (unitsUsedEdits[record._id] || 0) * 400;
+                                                    const finalAmount = amountPaid - amountUsed;
+                                                    const color = finalAmount > 0 ? "text-success" : finalAmount < 0 ? "text-danger" : "";
+                                                    return <span className={color}>Rs {finalAmount}</span>;
+                                                })()}
+                                            </td>
+                                            <td>
+                                                {record.attachment ? (
+                                                    <a
+                                                        href={`http://localhost:5000${record.attachment}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="btn btn-sm btn-info text-white"
+                                                    >
+                                                        View Doc
+                                                    </a>
+                                                ) : "N/A"}
+                                            </td>
+                                        </>
                                     )}
                                     {user?.role === "organisation" && (
                                         <td>
@@ -335,7 +372,7 @@ const BloodRequests = () => {
                             ))
                         ) : (
                             <tr>
-                                <td colSpan={user?.role === "hospital" ? 10 : user?.role === "organisation" ? 9 : 8} className="text-center text-muted py-4">
+                                <td colSpan={user?.role === "hospital" ? 13 : user?.role === "organisation" ? 9 : 8} className="text-center text-muted py-4">
                                     {searchTerm ? (
                                         <>
                                             <i className="fa-solid fa-search me-2"></i>

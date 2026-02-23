@@ -104,11 +104,11 @@ const Sidebar = () => {
                 <Link to="/admin/account-requests">Account Requests</Link>
               </div>
               <div
-                className={`menu-item ${location.pathname === "/requests" && "active"
+                className={`menu-item ${location.pathname === "/admin/analytics" && "active"
                   }`}
               >
-                <i className="fa-solid fa-file-medical"></i>
-                <Link to="/requests">Blood Requests</Link>
+                <i className="fa-solid fa-chart-bar"></i>
+                <Link to="/admin/analytics">Analytics</Link>
               </div>
               <div
                 className={`menu-item ${location.pathname === "/admin/certificate-requests" && "active"

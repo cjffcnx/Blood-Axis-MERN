@@ -26,8 +26,29 @@ const getRoleScopedInventoryQuery = (role, userId) => {
 // CREATE INVENTORY
 const createInventoryController = async (req, res) => {
   try {
+    const loggedInUserId = req.body.userId;
+    const loggedInUser = await userModel.findById(loggedInUserId).select("role");
+
+    if (!loggedInUser) {
+      return res.status(401).send({
+        success: false,
+        message: "Unauthorized: User not found",
+      });
+    }
+
     const { email } = req.body;
     const expiryCutoffDate = getExpiryCutoffDate();
+
+    // If the logged-in user is an organisation, use their ID for the organisation field
+    if (loggedInUser.role === "organisation") {
+      req.body.organisation = loggedInUserId;
+    }
+
+    // If the logged-in user is a hospital, use their ID for the hospital field
+    if (loggedInUser.role === "hospital") {
+      req.body.hospital = loggedInUserId;
+    }
+
     //validation
     const user = await userModel.findOne({ email });
     if (!user) {

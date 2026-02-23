@@ -266,6 +266,48 @@ export default function DonorDashboard() {
             </Grid>
             <Box sx={{ mt: 4 }} />
 
+            <Grid item xs={12}>
+                <Card sx={{ p: 2 }}>
+                    <Typography variant="h6" sx={{ mb: 1 }}>
+                        Blood Type Compatibility
+                    </Typography>
+                    <Typography sx={{ mb: 2 }}>
+                        Blood type compatibility depends on antigens (A, B, Rh) on red blood cells. O-negative is the universal donor (donates to all), while AB-positive is the universal recipient (receives from all). For safety, type O can only receive O, while AB+ can accept any type.
+                    </Typography>
+                    <Typography sx={{ mb: 1 }}>Red Cross Blood Donation</Typography>
+                    <Typography sx={{ mb: 1 }}>Red Cross Blood Donation</Typography>
+                    <Typography sx={{ mb: 2 }}>+3</Typography>
+                    <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                        Blood Type Compatibility Table
+                    </Typography>
+                    <Typography sx={{ mb: 1 }}>
+                        O- (Universal Donor): Can donate to: A+, A-, B+, B-, O+, O-, AB+, AB-. Can receive from: O- only.
+                    </Typography>
+                    <Typography sx={{ mb: 1 }}>
+                        O+: Can donate to: A+, B+, AB+, O+. Can receive from: O+, O-.
+                    </Typography>
+                    <Typography sx={{ mb: 1 }}>
+                        A-: Can donate to: A-, A+, AB-, AB+. Can receive from: A-, O-.
+                    </Typography>
+                    <Typography sx={{ mb: 1 }}>
+                        A+: Can donate to: A+, AB+. Can receive from: A+, A-, O+, O-.
+                    </Typography>
+                    <Typography sx={{ mb: 1 }}>
+                        B-: Can donate to: B-, B+, AB-, AB+. Can receive from: B-, O-.
+                    </Typography>
+                    <Typography sx={{ mb: 1 }}>
+                        B+: Can donate to: B+, AB+. Can receive from: B+, B-, O+, O-.
+                    </Typography>
+                    <Typography sx={{ mb: 1 }}>
+                        AB-: Can donate to: AB-, AB+. Can receive from: AB-, A-, B-, O-.
+                    </Typography>
+                    <Typography>
+                        AB+ (Universal Recipient): Can donate to: AB+ only. Can receive from: All types.
+                    </Typography>
+                </Card>
+            </Grid>
+            <Box sx={{ mt: 4 }} />
+
             {/* ----------- ORGANISATION LIST ----------- */}
             <Paper sx={{ p: 3, mb: 4 }}>
                 <Typography variant="h6" sx={{ mb: 2 }}>

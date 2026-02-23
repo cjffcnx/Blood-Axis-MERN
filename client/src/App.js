@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -23,7 +23,7 @@ import DonarList from "./pages/Admin/DonarList";
 import HospitalList from "./pages/Admin/HospitalList";
 import OrgList from "./pages/Admin/OrgList";
 import AdminHome from "./pages/Admin/AdminHome";
-import RequestList from "./pages/Admin/RequestList";
+import AdminAnalytics from "./pages/Admin/AdminAnalytics";
 import AccountRequests from "./pages/Admin/AccountRequests";
 import CertificateRequests from "./pages/Admin/CertificateRequests";
 import WelcomePage from "./pages/WelcomePage";
@@ -182,6 +182,14 @@ function App() {
             }
           />
           <Route
+            path="/admin/analytics"
+            element={
+              <ProtectedRoute>
+                <AdminAnalytics />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/request-supply"
             element={
               <ProtectedRoute>
@@ -265,7 +273,7 @@ function App() {
             path="/requests"
             element={
               <ProtectedRoute>
-                <RequestList />
+                <Navigate to="/admin" replace />
               </ProtectedRoute>
             }
           />

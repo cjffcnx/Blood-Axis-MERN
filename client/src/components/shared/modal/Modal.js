@@ -15,13 +15,26 @@ const Modal = () => {
       if (!bloodGroup || !quantity) {
         return alert("Please Provide All Fields");
       }
-      const { data } = await API.post("/inventory/create-inventory", {
+
+      // Build payload based on user role
+      const payload = {
         email,
-        organisation: user?._id,
         inventoryType,
         bloodGroup,
         quantity,
-      });
+      };
+
+      // Set organisation or hospital field based on logged-in user's role
+      if (user?.role === "organisation") {
+        payload.organisation = user._id;
+      } else if (user?.role === "hospital") {
+        payload.hospital = user._id;
+        // Hospitals still need organisation field (required by model)
+        // It will be set from email lookup or defaults to hospital ID
+        payload.organisation = user._id;
+      }
+
+      const { data } = await API.post("/inventory/create-inventory", payload);
       if (data?.success) {
         alert("New Record Created");
         window.location.reload();

@@ -49,7 +49,7 @@ const OrgList = () => {
         if (data?.success) {
           setData(data?.organisations || []);
         }
-      } else if (user?.role === "donar") {
+      } else if (user?.role === "donar" || user?.role === "organisation") {
         const { data } = await API.get("/inventory/get-orgnaisation");
         if (data?.success) {
           setData(data?.organisations || []);
@@ -84,6 +84,8 @@ const OrgList = () => {
         record.email,
         record.phone,
         record.address,
+        record.latitude?.toString(),
+        record.longitude?.toString(),
       ]
         .filter(Boolean)
         .some((value) => value.toLowerCase().includes(searchLower))
@@ -253,6 +255,8 @@ const OrgList = () => {
                 <th scope="col">Name</th>
                 <th scope="col">Email</th>
                 <th scope="col">Phone</th>
+                <th scope="col">Latitude</th>
+                <th scope="col">Longitude</th>
                 <th scope="col">Available</th>
                 <th scope="col">Date</th>
                 {isAdmin && <th scope="col">Action</th>}
@@ -264,6 +268,8 @@ const OrgList = () => {
                   <td>{record.organisationName || "N/A"}</td>
                   <td>{record.email}</td>
                   <td>{record.phone}</td>
+                  <td>{record.latitude ?? "N/A"}</td>
+                  <td>{record.longitude ?? "N/A"}</td>
                   <td>{record.isAvailable ? "Yes" : "No"}</td>
                   <td>{moment(record.createdAt).format("DD/MM/YYYY hh:mm A")}</td>
                   {isAdmin && (

@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import Layout from "../../components/shared/Layout/Layout";
 import { useSelector } from "react-redux";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
-import SwapHorizOutlinedIcon from "@mui/icons-material/SwapHorizOutlined";
 import LocalShippingOutlinedIcon from "@mui/icons-material/LocalShippingOutlined";
 import GroupOutlinedIcon from "@mui/icons-material/GroupOutlined";
 import HowToRegOutlinedIcon from "@mui/icons-material/HowToRegOutlined";
@@ -32,12 +31,6 @@ const AdminHome = () => {
       desc: "Oversee organization accounts and their blood bank operations.",
       to: "/org-list",
       icon: <GroupOutlinedIcon fontSize="inherit" />,
-    },
-    {
-      title: "Blood Requests",
-      desc: "Review and process all blood donation requests in real-time.",
-      to: "/requests",
-      icon: <SwapHorizOutlinedIcon fontSize="inherit" />,
     },
     {
       title: "Approve Accounts",

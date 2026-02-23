@@ -7,10 +7,6 @@ const CertificateRequests = () => {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
-    const [showEmailModal, setShowEmailModal] = useState(false);
-    const [emailRecipient, setEmailRecipient] = useState(null);
-    const [emailForm, setEmailForm] = useState({ subject: "", message: "" });
-    const [sendingEmail, setSendingEmail] = useState(false);
 
     // Fetch certificate requests from Google Sheet
     const getCertificateRequests = async () => {
@@ -44,56 +40,9 @@ const CertificateRequests = () => {
         setSearchTerm(e.target.value);
     };
 
-    const openEmailModal = (donor) => {
-        setEmailRecipient(donor);
-        setEmailForm({ subject: "", message: "" });
-        setShowEmailModal(true);
-    };
-
-    const closeEmailModal = () => {
-        setShowEmailModal(false);
-        setEmailRecipient(null);
-        setEmailForm({ subject: "", message: "" });
-    };
-
-    const handleEmailChange = (e) => {
-        const { name, value } = e.target;
-        setEmailForm((prev) => ({
-            ...prev,
-            [name]: value,
-        }));
-    };
-
-    const sendEmail = async () => {
-        if (!emailForm.subject.trim()) {
-            toast.error("Subject is required");
-            return;
-        }
-        if (!emailForm.message.trim()) {
-            toast.error("Message is required");
-            return;
-        }
-
-        try {
-            setSendingEmail(true);
-            const response = await API.post("/auth/send-email", {
-                to: emailRecipient.email,
-                subject: emailForm.subject,
-                html: `<p>${emailForm.message.replace(/\n/g, "<br>")}</p>`,
-                text: emailForm.message,
-            });
-            if (response.data?.success) {
-                toast.success("Email sent successfully!");
-                closeEmailModal();
-            } else {
-                toast.error(response.data?.message || "Failed to send email");
-            }
-        } catch (error) {
-            console.log(error);
-            toast.error("Error sending email");
-        } finally {
-            setSendingEmail(false);
-        }
+    const openOutlookCompose = (email) => {
+        const composeUrl = `https://outlook.office.com/mail/deeplink/compose?to=${encodeURIComponent(email)}`;
+        window.open(composeUrl, "_blank", "noopener,noreferrer");
     };
 
     const filteredData = data.filter(
@@ -190,7 +139,7 @@ const CertificateRequests = () => {
                                         <td>
                                             <button
                                                 className="btn btn-sm btn-success me-2"
-                                                onClick={() => openEmailModal(donor)}
+                                                onClick={() => openOutlookCompose(donor.email)}
                                                 title="Send email"
                                             >
                                                 <i className="fa-solid fa-envelope"></i> Email
@@ -248,93 +197,6 @@ const CertificateRequests = () => {
                         </ul>
                     </div>
                 </div>
-
-                {showEmailModal && emailRecipient && (
-                    <div className="modal show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
-                        <div className="modal-dialog">
-                            <div className="modal-content">
-                                <div className="modal-header">
-                                    <h5 className="modal-title">Send Email to {emailRecipient.name}</h5>
-                                    <button
-                                        type="button"
-                                        className="btn-close"
-                                        onClick={closeEmailModal}
-                                        disabled={sendingEmail}
-                                    ></button>
-                                </div>
-                                <div className="modal-body">
-                                    <div className="mb-3">
-                                        <label htmlFor="recipient-email" className="form-label">
-                                            Recipient Email
-                                        </label>
-                                        <input
-                                            type="email"
-                                            className="form-control"
-                                            id="recipient-email"
-                                            value={emailRecipient.email}
-                                            disabled
-                                        />
-                                    </div>
-                                    <div className="mb-3">
-                                        <label htmlFor="subject" className="form-label">
-                                            Subject <span className="text-danger">*</span>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            id="subject"
-                                            name="subject"
-                                            value={emailForm.subject}
-                                            onChange={handleEmailChange}
-                                            placeholder="Enter email subject"
-                                            disabled={sendingEmail}
-                                        />
-                                    </div>
-                                    <div className="mb-3">
-                                        <label htmlFor="message" className="form-label">
-                                            Message <span className="text-danger">*</span>
-                                        </label>
-                                        <textarea
-                                            className="form-control"
-                                            id="message"
-                                            name="message"
-                                            value={emailForm.message}
-                                            onChange={handleEmailChange}
-                                            placeholder="Enter your message"
-                                            rows="5"
-                                            disabled={sendingEmail}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="modal-footer">
-                                    <button
-                                        type="button"
-                                        className="btn btn-secondary"
-                                        onClick={closeEmailModal}
-                                        disabled={sendingEmail}
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className="btn btn-primary"
-                                        onClick={sendEmail}
-                                        disabled={sendingEmail}
-                                    >
-                                        {sendingEmail ? (
-                                            <>
-                                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                                Sending...
-                                            </>
-                                        ) : (
-                                            <><i className="fa-solid fa-paper-plane"></i> Send Email</>
-                                        )}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
             </div>
         </Layout>
     );

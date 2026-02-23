@@ -3,8 +3,10 @@ import Layout from "../../components/shared/Layout/Layout";
 import moment from "moment";
 import { toast } from "react-toastify";
 import API from "../../services/API";
+import { useSelector } from "react-redux";
 
 const HospitalList = () => {
+  const { user } = useSelector((state) => state.auth);
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -24,20 +26,49 @@ const HospitalList = () => {
   const [emailRecipient, setEmailRecipient] = useState(null);
   const [emailForm, setEmailForm] = useState({ subject: "", message: "" });
   const [sendingEmail, setSendingEmail] = useState(false);
+  const isAdmin = user?.role === "admin";
 
   //find hospital records
   const getHospitals = async (searchValue = "") => {
     try {
       setLoading(true);
-      const params = {};
-      if (searchValue.trim()) {
-        params.search = searchValue.trim();
-      }
-      const { data } = await API.get("/admin/hospital-list", { params });
-      if (data?.success) {
-        setData(data?.hospitalData || []);
+      if (isAdmin) {
+        const params = {};
+        if (searchValue.trim()) {
+          params.search = searchValue.trim();
+        }
+        const { data } = await API.get("/admin/hospital-list", { params });
+        if (data?.success) {
+          setData(data?.hospitalData || []);
+        } else {
+          toast.error(data?.message || "Failed to load hospitals");
+        }
       } else {
-        toast.error(data?.message || "Failed to load hospitals");
+        const { data } = await API.get("/inventory/get-hospitals");
+        if (data?.success) {
+          const hospitals = data?.hospitals || [];
+          const query = searchValue.trim().toLowerCase();
+          if (!query) {
+            setData(hospitals);
+          } else {
+            setData(
+              hospitals.filter((record) =>
+                [
+                  record.hospitalName,
+                  record.email,
+                  record.phone,
+                  record.address,
+                  record.latitude?.toString(),
+                  record.longitude?.toString(),
+                ]
+                  .filter(Boolean)
+                  .some((value) => value.toLowerCase().includes(query))
+              )
+            );
+          }
+        } else {
+          toast.error(data?.message || "Failed to load hospitals");
+        }
       }
     } catch (error) {
       console.log(error);
@@ -52,7 +83,7 @@ const HospitalList = () => {
       getHospitals(searchTerm);
     }, 300);
     return () => clearTimeout(debounce);
-  }, [searchTerm]);
+  }, [searchTerm, isAdmin]);
 
   const openEditModal = (hospital) => {
     setSelectedHospital(hospital);
@@ -220,9 +251,11 @@ const HospitalList = () => {
                 <th scope="col">Name</th>
                 <th scope="col">Email</th>
                 <th scope="col">Phone</th>
+                <th scope="col">Latitude</th>
+                <th scope="col">Longitude</th>
                 <th scope="col">Available</th>
                 <th scope="col">Date</th>
-                <th scope="col">Action</th>
+                {isAdmin && <th scope="col">Action</th>}
               </tr>
             </thead>
             <tbody>
@@ -231,22 +264,26 @@ const HospitalList = () => {
                   <td>{record.hospitalName || "N/A"}</td>
                   <td>{record.email}</td>
                   <td>{record.phone}</td>
+                  <td>{record.latitude ?? "N/A"}</td>
+                  <td>{record.longitude ?? "N/A"}</td>
                   <td>{record.isAvailable ? "Yes" : "No"}</td>
                   <td>{moment(record.createdAt).format("DD/MM/YYYY hh:mm A")}</td>
-                  <td className="d-flex gap-2">
-                    <button
-                      className="btn btn-sm btn-outline-primary"
-                      onClick={() => openEditModal(record)}
-                    >
-                      <i className="fa-solid fa-pen"></i> Edit
-                    </button>
-                    <button
-                      className="btn btn-sm btn-outline-success"
-                      onClick={() => openEmailModal(record)}
-                    >
-                      <i className="fa-solid fa-envelope"></i> Email
-                    </button>
-                  </td>
+                  {isAdmin && (
+                    <td className="d-flex gap-2">
+                      <button
+                        className="btn btn-sm btn-outline-primary"
+                        onClick={() => openEditModal(record)}
+                      >
+                        <i className="fa-solid fa-pen"></i> Edit
+                      </button>
+                      <button
+                        className="btn btn-sm btn-outline-success"
+                        onClick={() => openEmailModal(record)}
+                      >
+                        <i className="fa-solid fa-envelope"></i> Email
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -254,7 +291,7 @@ const HospitalList = () => {
         </div>
       )}
 
-      {showEditModal && selectedHospital && (
+      {isAdmin && showEditModal && selectedHospital && (
         <div className="modal show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
           <div className="modal-dialog modal-lg">
             <div className="modal-content">
@@ -366,7 +403,7 @@ const HospitalList = () => {
         </div>
       )}
 
-      {showEmailModal && emailRecipient && (
+      {isAdmin && showEmailModal && emailRecipient && (
         <div className="modal show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
           <div className="modal-dialog">
             <div className="modal-content">

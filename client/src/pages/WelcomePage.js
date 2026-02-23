@@ -58,7 +58,6 @@ const WelcomePage = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [chatOpen, setChatOpen] = useState(false);
     const [paymentLoading, setPaymentLoading] = useState(false);
-    const [paymentMethod, setPaymentMethod] = useState("onsite");
     const [stockCheck, setStockCheck] = useState({
         status: "idle",
         hasStock: null,
@@ -1063,9 +1062,14 @@ const WelcomePage = () => {
             setStockCheck(next);
             if (next.hasStock) {
                 setSelectedAlternative("");
-                setStockMessage(`Stock available (${next.availableUnits} unit${next.availableUnits === 1 ? "" : "s"})`);
+                setStockMessage(`Stock available: ${next.availableUnits} ML`);
             } else {
-                setStockMessage("Selected hospital does not have enough stock for this blood type.");
+                const requiredMl = Number(data?.requiredMl) || 0;
+                setStockMessage(
+                    requiredMl > 0
+                        ? `Selected hospital has insufficient stock (Available: ${next.availableUnits} ML, Required: ${requiredMl} ML).`
+                        : "Selected hospital does not have enough stock for this blood type."
+                );
                 if (selectedAlternative) {
                     const alternativeIds = new Set(alternatives.map((alternative) => alternative.id));
                     if (!alternativeIds.has(selectedAlternative)) {
@@ -1351,7 +1355,6 @@ const WelcomePage = () => {
         paymentLoading ||
         stockCheck.status === "checking" ||
         (requiresAlternative && !selectedAlternative);
-    const disableSubmitButton = stockCheck.status === "checking" || (requiresAlternative && !selectedAlternative);
 
     return (
         <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh' }}>
@@ -1615,7 +1618,7 @@ const WelcomePage = () => {
                                             onChange={handleChange}
                                         >
                                             <MenuItem value="">Select units</MenuItem>
-                                            <MenuItem value="1">1 unit (350 ml or 450 ml)</MenuItem>
+                                            <MenuItem value="1">1 unit (350 ml)</MenuItem>
                                             <MenuItem value="2">2 units</MenuItem>
                                             <MenuItem value="3">3 units</MenuItem>
                                             <MenuItem value="4">4 units</MenuItem>
@@ -1665,7 +1668,7 @@ const WelcomePage = () => {
                                     </FormControl>
                                 </Grid>
 
-                                {selectedHospital && formData.bloodGroup && (
+                                {selectedHospital && formData.bloodGroup && (stockCheck.status === "checking" || stockCheck.hasStock === true || (stockCheck.hasStock === false && !selectedAlternative) || stockCheck.status === "error") && (
                                     <Grid item xs={12} sm={6}>
                                         <Box sx={{ p: 1.5, borderRadius: 1, bgcolor: '#f9f9f9', height: '100%' }}>
                                             <Typography
@@ -1674,12 +1677,14 @@ const WelcomePage = () => {
                                                     fontWeight: 600,
                                                     color: stockCheck.hasStock === false || stockCheck.status === "error"
                                                         ? 'error.main'
-                                                        : 'success.main',
+                                                        : stockCheck.status === "checking"
+                                                            ? 'text.secondary'
+                                                            : 'success.main',
                                                 }}
                                             >
                                                 {stockCheck.status === "checking" ? "Checking stock..." : stockMessage}
                                             </Typography>
-                                            {locationStatus === "denied" && (
+                                            {locationStatus === "denied" && stockCheck.hasStock === false && (
                                                 <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                                                     Enable location to see nearest options.
                                                 </Typography>
@@ -1705,7 +1710,7 @@ const WelcomePage = () => {
                                                 )}
                                                 {stockCheck.alternatives.map((alternative) => (
                                                     <MenuItem key={alternative.id} value={alternative.id}>
-                                                        {alternative.name} ({alternative.role}) - {alternative.availableUnits} unit(s)
+                                                        {alternative.name} ({alternative.role}) - {alternative.availableUnits} ML
                                                         {typeof alternative.distanceKm === "number"
                                                             ? ` - ${alternative.distanceKm.toFixed(1)} km`
                                                             : " - N/A km"}
@@ -1720,17 +1725,11 @@ const WelcomePage = () => {
                                 )}
 
                                 <Grid item xs={12}>
-                                    <FormControl fullWidth>
-                                        <InputLabel>Payment Method</InputLabel>
-                                        <Select
-                                            value={paymentMethod}
-                                            label="Payment Method"
-                                            onChange={(e) => setPaymentMethod(e.target.value)}
-                                        >
-                                            <MenuItem value="onsite">Onsite Cash Payment</MenuItem>
-                                            <MenuItem value="esewa">Pay with eSewa</MenuItem>
-                                        </Select>
-                                    </FormControl>
+                                    <Box sx={{ p: 1.5, borderRadius: 1, bgcolor: '#f9f9f9' }}>
+                                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                            Payment Method: Pay with eSewa
+                                        </Typography>
+                                    </Box>
                                 </Grid>
 
                                 <Grid item xs={12}>
@@ -1763,30 +1762,17 @@ const WelcomePage = () => {
                                 </Grid>
 
                                 <Grid item xs={12}>
-                                    {paymentMethod === "esewa" ? (
-                                        <Button
-                                            type="button"
-                                            variant="contained"
-                                            color="error"
-                                            fullWidth
-                                            disabled={disablePaymentButton}
-                                            onClick={handlePayment}
-                                            sx={{ py: 1.5, fontSize: '1rem', borderRadius: 3 }}
-                                        >
-                                            {paymentLoading ? "Processing..." : "Proceed to eSewa Payment"}
-                                        </Button>
-                                    ) : (
-                                        <Button
-                                            type="submit"
-                                            variant="contained"
-                                            color="error"
-                                            fullWidth
-                                            disabled={disableSubmitButton}
-                                            sx={{ py: 1.5, fontSize: '1rem', borderRadius: 3 }}
-                                        >
-                                            Submit Request
-                                        </Button>
-                                    )}
+                                    <Button
+                                        type="button"
+                                        variant="contained"
+                                        color="error"
+                                        fullWidth
+                                        disabled={disablePaymentButton}
+                                        onClick={handlePayment}
+                                        sx={{ py: 1.5, fontSize: '1rem', borderRadius: 3 }}
+                                    >
+                                        {paymentLoading ? "Processing..." : "Proceed to eSewa Payment"}
+                                    </Button>
                                 </Grid>
                             </Grid>
                         </form>
