@@ -1,3 +1,48 @@
+// Newsletter subscribe controller
+const subscribeNewsletterController = async (req, res) => {
+    try {
+        const { email } = req.body || {};
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!email || !emailRegex.test(email)) {
+            return res.status(400).send({
+                success: false,
+                message: "Valid email is required",
+            });
+        }
+        if (!isEmailConfigured()) {
+            return res.status(503).send({
+                success: false,
+                message: "Email service is not configured",
+            });
+        }
+        const recipient = getContactRecipient();
+        const text = `New newsletter subscription: ${email}`;
+        const html = `<h2>New newsletter subscription</h2><p>Email: <strong>${email}</strong></p>`;
+        const result = await sendEmail({
+            to: recipient,
+            subject: "Newsletter Subscription",
+            text,
+            html,
+        });
+        if (!result.success) {
+            return res.status(503).send({
+                success: false,
+                message: "Failed to subscribe. Please try again later.",
+            });
+        }
+        return res.status(200).send({
+            success: true,
+            message: "Successfully subscribed to newsletter!",
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send({
+            success: false,
+            message: "Error subscribing to newsletter",
+            error,
+        });
+    }
+};
 const { sendEmail, isEmailConfigured } = require("../utils/emailService");
 const { isValidPhone } = require("../utils/validation");
 
@@ -93,4 +138,5 @@ const sendContactMessageController = async (req, res) => {
 
 module.exports = {
     sendContactMessageController,
+    subscribeNewsletterController,
 };

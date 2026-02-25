@@ -42,11 +42,10 @@ const Footer = () => {
             const { data } = await API.post("/contact/send-message", {
                 name: "Newsletter Subscriber",
                 email: email,
-                phone: "N/A",
+                phone: "",
                 subject: "Newsletter Subscription",
-                message: `Email: ${email}\n\nI would like to receive notifications about updates, blood donation campaigns, and recent news from Blood Bank Nepal.`
+                message: `Email: ${email}\n\nI would like to receive notifications about blood donation campaigns, updates, and recent news.`,
             });
-
             if (data?.success) {
                 toast.success("Successfully subscribed to newsletter!");
                 setEmail("");

@@ -1820,12 +1820,16 @@ const WelcomePage = () => {
                     </Box>
                     <Box sx={{ height: 'calc(100% - 48px)' }}>
                         <iframe
-                            title="AI Chatbot"
                             src="https://sreejang-ai-rag-chatbot-voice-and-text.hf.space"
-                            frameBorder="0"
                             width="100%"
                             height="100%"
-                        />
+                            frameborder="0"
+                            allow="microphone *; autoplay *;"
+                            allowfullscreen
+                            sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                            loading="lazy"
+                            title="Blood Bank AI Chatbot"
+                        ></iframe>
                     </Box>
                 </Box>
             )}
