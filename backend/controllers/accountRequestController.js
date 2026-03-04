@@ -188,7 +188,7 @@ const updateRequestStatusController = async (req, res) => {
             if (!isEmailConfigured()) {
                 return res.status(500).send({
                     success: false,
-                    message: "SMTP is not configured. Unable to send rejection email",
+                    message: "Email service is not configured. Unable to send rejection email",
                 });
             }
 

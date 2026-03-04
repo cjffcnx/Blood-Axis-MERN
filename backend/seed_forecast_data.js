@@ -4,7 +4,10 @@ const path = require("path");
 const colors = require("colors");
 
 // Load env
-dotenv.config({ path: path.resolve(__dirname, "../../.env") });
+dotenv.config();
+if (!process.env.MONGO_URL) {
+    dotenv.config({ path: path.resolve(__dirname, "../../.env") });
+}
 
 const inventoryModel = require("./models/inventoryModel");
 

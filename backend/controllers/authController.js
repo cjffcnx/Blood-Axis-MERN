@@ -131,7 +131,7 @@ const requestRegisterOtpController = async (req, res) => {
     }
 
     if (!isEmailConfigured()) {
-      logger.warn("OTP request failed: SMTP not configured");
+      logger.warn("OTP request failed: email service not configured");
       return res.status(503).send({
         success: false,
         message: "Email service unavailable. Please try again later.",
@@ -289,7 +289,7 @@ const forgotPasswordController = async (req, res) => {
     }
 
     if (!isEmailConfigured()) {
-      logger.warn("Forgot password failed: SMTP not configured");
+      logger.warn("Forgot password failed: email service not configured");
       return res.status(503).send({
         success: false,
         message: "Email service unavailable. Please try again later.",
