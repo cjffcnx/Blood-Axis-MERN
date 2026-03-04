@@ -1,4 +1,3 @@
-const axios = require("axios");
 const nodemailer = require("nodemailer");
 const { getLogger } = require("./logger");
 
@@ -9,21 +8,18 @@ const getEmailProvider = () => readVar("EMAIL_PROVIDER").toLowerCase();
 
 const getResendConfig = () => {
     const apiKey = readVar("RESEND_API_KEY");
-    const from = readVar("RESEND_FROM") || readVar("SMTP_FROM");
+    const from = readVar("RESEND_FROM");
 
-    if (!apiKey) {
+    const missing = [];
+    if (!apiKey) missing.push("RESEND_API_KEY");
+    if (!from) missing.push("RESEND_FROM");
+
+    if (missing.length) {
+        logger.warn(`Resend not configured. Missing: ${missing.join(", ")}`);
         return null;
     }
 
-    if (!from) {
-        logger.warn("Resend configured but sender is missing. Set RESEND_FROM or SMTP_FROM.");
-        return null;
-    }
-
-    return {
-        apiKey,
-        from,
-    };
+    return { apiKey, from };
 };
 
 const getSmtpConfig = () => {
@@ -55,82 +51,76 @@ const getSmtpConfig = () => {
 
 const isEmailConfigured = () => {
     const provider = getEmailProvider();
-    if (provider === "resend") {
-        return Boolean(getResendConfig());
-    }
+    if (provider === "resend") return Boolean(getResendConfig());
     return Boolean(getSmtpConfig());
 };
 
-const sendViaResend = async ({ to, subject, html, text }, resendConfig) => {
-    const payload = {
-        from: resendConfig.from,
-        to: [to],
-        subject,
-    };
+const sendEmailWithResend = async ({ to, subject, html, text }) => {
+    const config = getResendConfig();
+    if (!config) return { success: false, error: "Resend not configured" };
 
-    if (html) payload.html = html;
-    if (text) payload.text = text;
-
-    const response = await axios.post("https://api.resend.com/emails", payload, {
-        headers: {
-            Authorization: `Bearer ${resendConfig.apiKey}`,
-            "Content-Type": "application/json",
-        },
-        timeout: 15000,
+    try {
+        const res = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${config.apiKey}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                from: config.from,
+                to: [to],
+                subject,
+                html: html || (text ? `<p>${text}</p>` : "<p></p>"),
+                text: text || undefined,
+            }),
     });
 
-    const messageId = response?.data?.id;
-    logger.info(`Email sent via Resend${messageId ? ` (${messageId})` : ""}`);
-    return { success: true };
+        if (!res.ok) {
+            const errText = await res.text();
+            logger.error(`Resend send failed: ${res.status} ${errText}`);
+            return { success: false, error: "Resend send failed" };
+        }
+
+        return { success: true };
+    } catch (error) {
+        logger.error(`Resend send failed: ${error.message}`);
+        return { success: false, error: "Resend send failed" };
+    }
 };
 
-const sendViaSmtp = async ({ to, subject, html, text }, smtpConfig) => {
+const sendEmailWithSmtp = async ({ to, subject, html, text }) => {
+    const config = getSmtpConfig();
+    if (!config) return { success: false, error: "SMTP not configured" };
+
+    try {
     const transporter = nodemailer.createTransport({
-        host: smtpConfig.host,
-        port: smtpConfig.port,
-        secure: smtpConfig.port === 465,
-        auth: smtpConfig.auth,
-        connectionTimeout: 15000,
-        greetingTimeout: 15000,
-        socketTimeout: 20000,
+            host: config.host,
+            port: config.port,
+            secure: config.port === 465,
+            auth: config.auth,
     });
 
     await transporter.sendMail({
-        from: smtpConfig.from,
-        to,
-        subject,
-        text,
-        html,
+            from: config.from,
+            to,
+            subject,
+            text,
+            html,
     });
 
-    logger.info("Email sent via SMTP");
     return { success: true };
-};
-
-const sendEmail = async ({ to, subject, html, text }) => {
-    const provider = getEmailProvider();
-
-    try {
-        if (provider === "resend") {
-            const resendConfig = getResendConfig();
-            if (!resendConfig) {
-                logger.warn("Email provider is set to Resend but configuration is incomplete.");
-                return { success: false, error: "Resend not configured" };
-            }
-            return await sendViaResend({ to, subject, html, text }, resendConfig);
-        }
-
-        const smtpConfig = getSmtpConfig();
-        if (!smtpConfig) {
-            logger.warn("SMTP not configured. Email not sent.");
-            return { success: false, error: "SMTP not configured" };
-        }
-
-        return await sendViaSmtp({ to, subject, html, text }, smtpConfig);
     } catch (error) {
         logger.error(`Email send failed: ${error.message}`);
         return { success: false, error: "Email send failed" };
     }
+};
+
+const sendEmail = async ({ to, subject, html, text }) => {
+    const provider = getEmailProvider();
+    if (provider === "resend") {
+        return sendEmailWithResend({ to, subject, html, text });
+    }
+    return sendEmailWithSmtp({ to, subject, html, text });
 };
 
 module.exports = {
