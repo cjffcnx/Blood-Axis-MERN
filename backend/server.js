@@ -6,8 +6,8 @@ const morgan = require("morgan");
 const cors = require("cors");
 const connectDB = require("./config/db");
 const { initializeScheduler } = require("./routes/schedulerRoutes");
-// dotconfig - explicitly resolve .env located one level up (project root)
-dotenv.config({ path: path.resolve(__dirname, "../.env") });
+// dotconfig - explicitly resolve .env located two levels up (workspace root)
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 //mongodb connection
 connectDB();
