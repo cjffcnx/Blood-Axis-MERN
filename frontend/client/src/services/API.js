@@ -1,6 +1,13 @@
 import axios from "axios";
 
-const API = axios.create({ baseURL: process.env.REACT_APP_BASEURL || "/api/v1" });
+const configuredBaseUrl =
+  process.env.REACT_APP_BASEURL || process.env.REACT_APP_API_URL || "/api/v1";
+
+const normalizedBaseUrl = configuredBaseUrl.endsWith("/")
+  ? configuredBaseUrl.slice(0, -1)
+  : configuredBaseUrl;
+
+const API = axios.create({ baseURL: normalizedBaseUrl });
 
 API.interceptors.request.use((req) => {
   if (localStorage.getItem("token")) {

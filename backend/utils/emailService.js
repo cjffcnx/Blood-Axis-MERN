@@ -5,6 +5,7 @@ const { getLogger } = require("./logger");
 const logger = getLogger("emailService");
 
 const readVar = (name) => (process.env[name] || "").trim();
+const getEmailProvider = () => readVar("EMAIL_PROVIDER").toLowerCase();
 
 const getResendConfig = () => {
     const apiKey = readVar("RESEND_API_KEY");
@@ -52,7 +53,13 @@ const getSmtpConfig = () => {
     };
 };
 
-const isEmailConfigured = () => Boolean(getResendConfig() || getSmtpConfig());
+const isEmailConfigured = () => {
+    const provider = getEmailProvider();
+    if (provider === "resend") {
+        return Boolean(getResendConfig());
+    }
+    return Boolean(getSmtpConfig());
+};
 
 const sendViaResend = async ({ to, subject, html, text }, resendConfig) => {
     const payload = {
@@ -101,25 +108,22 @@ const sendViaSmtp = async ({ to, subject, html, text }, smtpConfig) => {
 };
 
 const sendEmail = async ({ to, subject, html, text }) => {
-    const resendConfig = getResendConfig();
-    const smtpConfig = getSmtpConfig();
-
-    if (!resendConfig && !smtpConfig) {
-        logger.warn("Email service is not configured. Email not sent.");
-        return { success: false, error: "Email service not configured" };
-    }
+    const provider = getEmailProvider();
 
     try {
-        if (resendConfig) {
-            try {
-                return await sendViaResend({ to, subject, html, text }, resendConfig);
-            } catch (error) {
-                logger.error(`Resend email failed: ${error.message}`);
-                if (!smtpConfig) {
-                    return { success: false, error: "Resend email failed" };
-                }
-                logger.warn("Falling back to SMTP after Resend failure.");
+        if (provider === "resend") {
+            const resendConfig = getResendConfig();
+            if (!resendConfig) {
+                logger.warn("Email provider is set to Resend but configuration is incomplete.");
+                return { success: false, error: "Resend not configured" };
             }
+            return await sendViaResend({ to, subject, html, text }, resendConfig);
+        }
+
+        const smtpConfig = getSmtpConfig();
+        if (!smtpConfig) {
+            logger.warn("SMTP not configured. Email not sent.");
+            return { success: false, error: "SMTP not configured" };
         }
 
         return await sendViaSmtp({ to, subject, html, text }, smtpConfig);
