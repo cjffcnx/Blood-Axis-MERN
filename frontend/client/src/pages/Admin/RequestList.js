@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Layout from "../../components/shared/Layout/Layout";
-import API from "../../services/API";
+import API, { buildBackendFileUrl } from "../../services/API";
 import moment from "moment";
 import { toast } from "react-toastify";
 
@@ -118,7 +118,7 @@ const RequestList = () => {
                                         <td>
                                             {record.attachment ? (
                                                 <a
-                                                    href={`http://localhost:5000${record.attachment}`}
+                                                    href={buildBackendFileUrl(record.attachment)}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="btn btn-sm btn-info text-white"

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Layout from "../../components/shared/Layout/Layout";
 import moment from "moment";
-import API from "../../services/API";
+import API, { buildBackendFileUrl } from "../../services/API";
 import { toast } from "react-toastify";
 
 const AccountRequests = () => {
@@ -168,7 +168,7 @@ const AccountRequests = () => {
                                 <td>{moment(record.createdAt).format("DD/MM/YYYY hh:mm A")}</td>
                                 <td>
                                     <a
-                                        href={`${window.location.protocol}//${window.location.hostname}:5000/${record.proofFile.replace(/\\/g, "/")}`}
+                                        href={buildBackendFileUrl(record.proofFile)}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="btn btn-sm btn-info"

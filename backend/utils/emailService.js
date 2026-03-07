@@ -73,7 +73,7 @@ const sendEmailWithResend = async ({ to, subject, html, text }) => {
                 html: html || (text ? `<p>${text}</p>` : "<p></p>"),
                 text: text || undefined,
             }),
-    });
+        });
 
         if (!res.ok) {
             const errText = await res.text();
@@ -93,22 +93,22 @@ const sendEmailWithSmtp = async ({ to, subject, html, text }) => {
     if (!config) return { success: false, error: "SMTP not configured" };
 
     try {
-    const transporter = nodemailer.createTransport({
+        const transporter = nodemailer.createTransport({
             host: config.host,
             port: config.port,
             secure: config.port === 465,
             auth: config.auth,
-    });
+        });
 
-    await transporter.sendMail({
+        await transporter.sendMail({
             from: config.from,
             to,
             subject,
             text,
             html,
-    });
+        });
 
-    return { success: true };
+        return { success: true };
     } catch (error) {
         logger.error(`Email send failed: ${error.message}`);
         return { success: false, error: "Email send failed" };
